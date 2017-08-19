@@ -1,0 +1,8 @@
+[package]
+name = "esogolf"
+version = "0.0.1"
+authors = ["LFalch <lucas@wasd.dk>"]
+description = "esolang"
+
+[dependencies]
+clap = "2.26"
