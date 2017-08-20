@@ -1,7 +1,7 @@
 extern crate clap;
+extern crate esogolf;
 
 use std::fs::File;
-use std::io::Read;
 use clap::{Arg, App};
 
 fn main() {
@@ -18,9 +18,7 @@ fn main() {
                                .help("Sets the level of verbosity"))
                           .get_matches();
     let src = matches.value_of("SOURCE").unwrap();
-    let mut file = File::open(src).unwrap();
 
-    let mut s = String::new();
-    file.read_to_string(&mut s).unwrap();
-    println!("{}", s);
+    let file = File::open(src).unwrap();
+    esogolf::run_program(file);
 }
