@@ -1,0 +1,5 @@
+forrange [
+    0
+    { 1 + swap dup 2 dupgrab swap () swap } 2 grab *
+    () drop drop
+] :=

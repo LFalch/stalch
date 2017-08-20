@@ -7,6 +7,7 @@ use cmd::Command;
 pub enum Value {
     Num(f64),
     Str(String),
+    Variable(String),
     Block(u16, Vec<Command>),
     Null
 }
@@ -17,6 +18,8 @@ impl Value {
             Num(n) => !n.is_nan() && n != 0.,
             Str(ref s) => !s.is_empty(),
             Block(_, _) => true,
+            // TODO Return error
+            Variable(_) => false,
             Null => false
         }
     }
@@ -24,6 +27,8 @@ impl Value {
         let repl = match *self {
             Num(_) => return,
             Null | Block(_, _) => Num(0./0.),
+            // TODO Return error
+            Variable(_) => Num(0./0.),
             Str(ref s) => {
                 if s == "true" {
                     Num(1.)
@@ -67,6 +72,7 @@ impl fmt::Display for Value {
             Num(ref n) => n.fmt(f),
             Str(ref s) => s.fmt(f),
             Block(_, _) => write!(f, "[code block]"),
+            Variable(ref s)=> write!(f, "[variable: {}]", s),
             Null       => "NULL".fmt(f)
         }
     }
@@ -114,7 +120,8 @@ impl Add for Value {
                 a.extend(b);
                 Block(1, a)
             }
-            (Block(_, _), _) | (_, Block(_, _)) => panic!("Can't add blocks with other types")
+            (Block(_, _), _) | (_, Block(_, _)) => panic!("Can't add blocks with other types"),
+            (Variable(_), _) | (_, Variable(_)) => panic!("Variables aren't supposed to be here wtf")
         }
     }
 }

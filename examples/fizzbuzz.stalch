@@ -1,6 +1,8 @@
-0 { swap 1 + swap dup () } 50 * { swap
+"stdlib.stalch" require
 
-"" $
+{
+
+"" swap
 
 dup 3 % 0 =
 { swap "Fizz" + swap }
@@ -13,8 +15,9 @@ dup 5 % 0 =
 if ()
 
 swap dup
-{}
-{ drop dup }
-if () _
+{ _ drop }
+{ drop _ }
+if ()
 
-swap } swap ()
+}
+50 forrange ()

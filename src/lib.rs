@@ -2,9 +2,11 @@
 
 use std::fs::File;
 use std::io::Read;
+use std::collections::HashMap;
 
 struct State {
     stack: Vec<Value>,
+    vars: HashMap<String, Value>,
     block_nesting: u8,
     temp: Vec<Command>
 }
@@ -14,14 +16,19 @@ impl State {
         State {
             block_nesting: 0,
             stack: Vec::new(),
+            vars: HashMap::new(),
             temp: Vec::new()
         }
     }
 }
 
 pub fn run_program(src_file: File) {
-    let mut buf = String::new();
     let mut state = State::new();
+    run_with_state(src_file, &mut state);
+}
+
+fn run_with_state(src_file: File, state: &mut State) {
+    let mut buf = String::new();
     let mut ignoring_whitespace = false;
 
     for c in src_file.chars() {
@@ -29,7 +36,7 @@ pub fn run_program(src_file: File) {
             Ok(c) => {
                 if c.is_whitespace() && !ignoring_whitespace {
                     if !buf.is_empty() {
-                        run_command(&mut state, Command::from_str(&buf));
+                        run_command(state, Command::from_str(&buf));
                         buf.clear();
                     }
                 } else {
@@ -97,9 +104,22 @@ fn run_command(state: &mut State, cmd: Command) {
         } else if let Ok(n) = s.parse::<f64>() {
             state.stack.push(Num(n));
         } else {
-            panic!("Unknown cmd `{}'", s)
+            if let Some(v) = state.vars.get(&s) {
+                state.stack.push(v.clone());
+            } else {
+                state.stack.push(Variable(s));
+            }
         }
         EmptyBlock => state.stack.push(Block(1, Vec::new())),
+        Include => {
+            match state.stack.pop().unwrap() {
+                Str(s) => {
+                    let file = File::open(s).unwrap();
+                    run_with_state(file, state);
+                }
+                _ => panic!("Can only include strings")
+            }
+        }
         True => state.stack.push(Num(1.)),
         False => state.stack.push(Num(0.)),
         NullVal => state.stack.push(Value::Null),
@@ -121,6 +141,15 @@ fn run_command(state: &mut State, cmd: Command) {
             } else {
                 when_false
             });
+        }
+        Assign => {
+            match (state.stack.pop().unwrap(), state.stack.pop().unwrap()) {
+                (Variable(_), Variable(_)) => panic!("Can't assign variable to variable"),
+                (Variable(h), v) | (v, Variable(h)) => {
+                    state.vars.insert(h, v);
+                }
+                _ => panic!("Can't assign to other than a variable")
+            }
         }
         ApplyFunction => {
             match state.stack.pop() {
@@ -145,6 +174,24 @@ fn run_command(state: &mut State, cmd: Command) {
             let b = state.stack.pop().unwrap();
             state.stack.push(a);
             state.stack.push(b);
+        }
+        Grab => {
+            let i = match state.stack.pop().unwrap() {
+                Num(n) => state.stack.len() - n as usize - 1,
+                _ => panic!("Can only grab numbers")
+            };
+
+            let n_elem = state.stack.remove(i);
+            state.stack.push(n_elem);
+        }
+        DupGrab => {
+            let i = match state.stack.pop().unwrap() {
+                Num(n) => state.stack.len() - n as usize - 1,
+                _ => panic!("Can only grab numbers")
+            };
+
+            let n_elem = state.stack[i].clone();
+            state.stack.push(n_elem);
         }
         Drop => {
             state.stack.pop().unwrap();
