@@ -1,1 +1,7 @@
-[ "It was true" _ ] { "It was false" _ } T ? ()
+{
+    "Type password" _
+    { "Correct!" _ }
+    { "Incorrect!" _ } < "secret" = ? ()
+}
+{ "Exiting program" _ }
+< # ? ()

@@ -12,17 +12,47 @@ pub enum Value {
 impl Value {
     pub fn as_bool(&self) -> bool {
         match *self {
-            Num(n) => !n.is_nan() || n != 0.,
+            Num(n) => !n.is_nan() && n != 0.,
             Str(ref s) => !s.is_empty(),
             Block(_) => true,
             Null => false
         }
     }
+    pub fn make_num(&mut self) {
+        let repl = match *self {
+            Num(_) => return,
+            Null | Block(_) => Num(0./0.),
+            Str(ref s) => {
+                if s == "true" {
+                    Num(1.)
+                } else if s == "false" {
+                    Num(0.)
+                } else {
+                    Num(s.parse::<f64>().unwrap_or(0./0.))
+                }
+            }
+        };
+        *self = repl;
+    }
+}
+
+impl From<bool> for Value {
     #[inline(always)]
-    pub fn from_bool(b: bool) -> Self {
+    fn from(b: bool) -> Value {
         match b {
             true => Num(1.),
             false => Num(0.),
+        }
+    }
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (&Null, &Null) => true,
+            (&Num(a), &Num(b)) => a == b,
+            (&Str(ref a), &Str(ref b)) => a == b,
+            _ => false
         }
     }
 }
@@ -43,7 +73,7 @@ impl fmt::Display for Value {
 impl Not for Value {
     type Output = Self;
     fn not(self) -> Self {
-        Value::from_bool(self.as_bool())
+        self.as_bool().into()
     }
 }
 

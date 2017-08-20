@@ -5,14 +5,16 @@ use std::io::Read;
 
 struct State {
     stack: Vec<Value>,
-    wip_block: Option<Vec<String>>
+    block_nesting: u8,
+    temp: Vec<String>
 }
 
 impl State {
     fn new() -> Self{
         State {
+            block_nesting: 0,
             stack: Vec::new(),
-            wip_block: None
+            temp: Vec::new()
         }
     }
 }
@@ -46,29 +48,41 @@ mod value;
 use value::Value;
 use value::Value::*;
 
-fn binop<F: FnOnce(Value, Value) -> Value>(s: &mut State, f: F) {
+fn binop<T: Into<Value>, F: FnOnce(Value, Value) -> T>(s: &mut State, f: F) {
     let a = s.stack.pop().unwrap();
     let b = s.stack.pop().unwrap();
 
-    s.stack.push(f(a, b))
+    s.stack.push(f(a, b).into())
 }
 
 use std::ops::*;
+use std::mem::replace;
 
 fn run_command(state: &mut State, cmd: &str) {
-    if let ref mut b @ Some(_) = state.wip_block {
+    if state.block_nesting > 0 {
         if cmd == "}" || cmd == "]" || cmd == "end" {
-            state.stack.push(Block(b.take().unwrap()));
+            state.block_nesting -= 1;
+            if state.block_nesting == 0 {
+                let t = replace(&mut state.temp, Vec::new());
+                state.stack.push(Block(t));
+            } else {
+                state.temp.push(cmd.to_owned());
+            }
         } else {
-            b.as_mut().unwrap().push(cmd.to_owned());
+            match &*cmd.to_lowercase() {
+                "{" | "[" | "do" => state.block_nesting += 1,
+                _ => ()
+            }
+            state.temp.push(cmd.to_owned());
         }
+        return
     } else if cmd.starts_with('"') {
         state.stack.push(Str(cmd[1..cmd.len()-1].to_owned()));
     } else if let Ok(n) = cmd.parse::<f64>() {
         state.stack.push(Num(n));
     } else {
         match &*cmd.to_lowercase() {
-            "{" | "[" | "do" => state.wip_block = Some(Vec::new()),
+            "{" | "[" | "do" => state.block_nesting = 1,
             "T" | "true" => state.stack.push(Num(1.)),
             "t" | "f" | "false" => state.stack.push(Num(0.)),
             "¤" | "null" | "nil" => state.stack.push(Value::Null),
@@ -101,7 +115,15 @@ fn run_command(state: &mut State, cmd: &str) {
                     _ => panic!("No block on stack")
                 }
             }
-            "<" => state.stack.push(Str("user input".to_owned())),
+            "<" | "read" => {
+                let mut line = String::new();
+                std::io::stdin().read_line(&mut line).unwrap();
+                line = line.trim_right().to_owned();
+                state.stack.push(Str(line));
+            }
+            "#" | "num" => state.stack.last_mut().unwrap().make_num(),
+            "==" | "=" | "eq" => binop(state, |a, b| a == b),
+            "!=" | "~=" | "neq" => binop(state, |a, b| a != b),
             ">" | "wrte" => print!("{}", state.stack.pop().unwrap()),
             "_" | "prnt" => println!("{}", state.stack.pop().unwrap()),
             "+" | "add" => binop(state, Add::add),
