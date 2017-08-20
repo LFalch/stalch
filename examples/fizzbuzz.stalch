@@ -20,4 +20,10 @@ swap dup
 if ()
 
 }
-50 forrange ()
+
+"How far do you wanna go?" _
+read num dup
+"Doing FizzBuzz from 1 to " swap + "
+" + _
+
+forrange ()
