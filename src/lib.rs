@@ -22,25 +22,20 @@ impl State {
 pub fn run_program(src_file: File) {
     let mut buf = String::new();
     let mut state = State::new();
-    let mut is_making_string = false;
+    let mut ignoring_whitespace = false;
 
     for c in src_file.chars() {
         match c {
             Ok(c) => {
-                if c.is_whitespace() && !is_making_string {
+                if c.is_whitespace() && !ignoring_whitespace {
                     if !buf.is_empty() {
-                        run_command(&mut state, Command::from_str(&buf.to_lowercase()));
+                        run_command(&mut state, Command::from_str(&buf));
                         buf.clear();
                     }
-                } else if c == '"' {
-                    if is_making_string {
-                        run_command(&mut state, Value(buf.clone()));
-                        buf.clear();
-                    } else {
-                        buf.push('"');
-                    }
-                    is_making_string = !is_making_string;
                 } else {
+                    if c == '"' {
+                        ignoring_whitespace = !ignoring_whitespace;
+                    }
                     buf.push(c);
                 }
             },
@@ -98,7 +93,7 @@ fn run_command(state: &mut State, cmd: Command) {
         }
         ref cmd if state.block_nesting > 0 => state.temp.push(cmd.clone()),
         Value(s) => if s.starts_with('"') {
-            state.stack.push(Str(s[1..].to_owned()));
+            state.stack.push(Str(s[1..s.len()-1].to_owned()));
         } else if let Ok(n) = s.parse::<f64>() {
             state.stack.push(Num(n));
         } else {

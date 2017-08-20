@@ -32,7 +32,7 @@ use self::Command::*;
 
 impl Command {
     pub fn from_str(cmd: &str) -> Self {
-        match cmd {
+        match &*cmd.to_lowercase() {
             "{"|"["|"do" => BeginBlock,
             "}"|"]"|"end" => EndBlock,
             "{}"|"[]"|"nop" => EmptyBlock,
@@ -58,7 +58,7 @@ impl Command {
             "*" | "mul" => Mul,
             "/" | "div" => Div,
             "%" | "rem" => Rem,
-            s => Value(s.to_owned())
+            _ => Value(cmd.to_owned())
         }
     }
 }
