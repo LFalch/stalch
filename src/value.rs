@@ -1,11 +1,13 @@
 use std::ops::*;
 use std::fmt;
 
+use cmd::Command;
+
 #[derive(Debug, Clone)]
 pub enum Value {
     Num(f64),
     Str(String),
-    Block(Vec<String>),
+    Block(u16, Vec<Command>),
     Null
 }
 
@@ -14,14 +16,14 @@ impl Value {
         match *self {
             Num(n) => !n.is_nan() && n != 0.,
             Str(ref s) => !s.is_empty(),
-            Block(_) => true,
+            Block(_, _) => true,
             Null => false
         }
     }
     pub fn make_num(&mut self) {
         let repl = match *self {
             Num(_) => return,
-            Null | Block(_) => Num(0./0.),
+            Null | Block(_, _) => Num(0./0.),
             Str(ref s) => {
                 if s == "true" {
                     Num(1.)
@@ -64,7 +66,7 @@ impl fmt::Display for Value {
         match *self {
             Num(ref n) => n.fmt(f),
             Str(ref s) => s.fmt(f),
-            Block(_) => write!(f, "[code block]"),
+            Block(_, _) => write!(f, "[code block]"),
             Null       => "NULL".fmt(f)
         }
     }
@@ -82,7 +84,7 @@ impl BitAnd for Value {
     fn bitand(self, other: Self) -> Self {
         match (self, other) {
             (Num(a), Num(b)) => Num((a as i64 & b as i64) as f64),
-            (Block(_), _) | (_, Block(_)) => Null,
+            (Block(_, _), _) | (_, Block(_, _)) => Null,
             (a, b)  => (a.as_bool() && b.as_bool()).into(),
         }
     }
@@ -93,7 +95,7 @@ impl BitOr for Value {
     fn bitor(self, other: Self) -> Self {
         match (self, other) {
             (Num(a), Num(b)) => Num((a as i64 | b as i64) as f64),
-            (Block(_), _) | (_, Block(_)) => Null,
+            (Block(_, _), _) | (_, Block(_, _)) => Null,
             (a, b)  => (a.as_bool() || b.as_bool()).into(),
         }
     }
@@ -108,11 +110,11 @@ impl Add for Value {
             (Str(a), b)  => Str(format!("{}{}", a, b)),
             (Num(a), Str(b))  => Str(format!("{}{}", a, b)),
             (Num(a), Num(b)) => Num(a + b),
-            (Block(mut a), Block(b)) => {
+            (Block(1, mut a), Block(1, b)) => {
                 a.extend(b);
-                Block(a)
+                Block(1, a)
             }
-            (Block(_), _) | (_, Block(_)) => panic!("Can't add blocks")
+            (Block(_, _), _) | (_, Block(_, _)) => panic!("Can't add blocks with other types")
         }
     }
 }
@@ -123,13 +125,8 @@ impl Mul for Value {
         match (self, other) {
             (Str(s), Num(n)) | (Num(n), Str(s))  => Str(s.repeat(n as usize)),
             (Num(a), Num(b)) => Num(a * b),
-            (Num(n), Block(b)) | (Block(b), Num(n)) => {
-                let mut ret = Vec::with_capacity(b.len() * n as usize);
-                let extra = b.clone();
-                for _ in 0..n as usize {
-                    ret.extend(extra.clone());
-                }
-                Block(ret)
+            (Num(n), Block(bn, b)) | (Block(bn, b), Num(n)) => {
+                Block(n as u16 * bn, b)
             },
             _ => Null,
         }

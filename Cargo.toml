@@ -6,3 +6,6 @@ description = "stack-based esolang"
 
 [dependencies]
 clap = "2.26"
+
+[features]
+debug = []
