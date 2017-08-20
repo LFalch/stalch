@@ -1,5 +1,1 @@
-"Hello World" dup prnt
-
-
-
-        prnt
+[ "It was true" _ ] { "It was false" _ } T ? ()
