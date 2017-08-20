@@ -1,8 +1,8 @@
 [package]
-name = "esogolf"
+name = "stalch"
 version = "0.0.1"
 authors = ["LFalch <lucas@wasd.dk>"]
-description = "esolang"
+description = "stack-based esolang"
 
 [dependencies]
 clap = "2.26"
