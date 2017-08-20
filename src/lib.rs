@@ -75,7 +75,6 @@ fn run_command(state: &mut State, cmd: &str) {
             }
             state.temp.push(cmd.to_owned());
         }
-        return
     } else if cmd.starts_with('"') {
         state.stack.push(Str(cmd[1..cmd.len()-1].to_owned()));
     } else if let Ok(n) = cmd.parse::<f64>() {
@@ -83,6 +82,7 @@ fn run_command(state: &mut State, cmd: &str) {
     } else {
         match &*cmd.to_lowercase() {
             "{" | "[" | "do" => state.block_nesting = 1,
+            "{}" | "[]" => state.stack.push(Block(Vec::new())),
             "T" | "true" => state.stack.push(Num(1.)),
             "t" | "f" | "false" => state.stack.push(Num(0.)),
             "¤" | "null" | "nil" => state.stack.push(Value::Null),
