@@ -1,5 +1,5 @@
 extern crate clap;
-extern crate esogolf;
+extern crate stalch;
 
 use std::fs::File;
 use clap::{Arg, App};
@@ -20,5 +20,5 @@ fn main() {
     let src = matches.value_of("SOURCE").unwrap();
 
     let file = File::open(src).unwrap();
-    esogolf::run_program(file);
+    stalch::run_program(file);
 }
