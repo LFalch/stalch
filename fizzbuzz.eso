@@ -1,16 +1,20 @@
-"" read num
+0 { swap 1 + swap dup () } 50 * { swap
+
+"" $
 
 dup 3 % 0 =
 { swap "Fizz" + swap }
-{ }
+{}
 if ()
 
 dup 5 % 0 =
 { swap "Buzz" + swap }
-{ }
+{}
 if ()
 
 swap dup
-{ }
-{ drop }
+{}
+{ drop dup }
 if () _
+
+swap } swap ()

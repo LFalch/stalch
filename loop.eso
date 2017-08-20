@@ -1,0 +1,1 @@
+0 { swap 1 + swap dup () } 50 * { swap dup _ swap } swap ()
