@@ -1,7 +1,8 @@
-{
+< # {
     "Type password" _
+    < "secret" =
     { "Correct!" _ }
-    { "Incorrect!" _ } < "secret" = ? ()
+    { "Incorrect!" _ } ? ()
 }
 { "Exiting program" _ }
-< # ? ()
+? ()

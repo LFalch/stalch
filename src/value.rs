@@ -77,6 +77,28 @@ impl Not for Value {
     }
 }
 
+impl BitAnd for Value {
+    type Output = Self;
+    fn bitand(self, other: Self) -> Self {
+        match (self, other) {
+            (Num(a), Num(b)) => Num((a as i64 & b as i64) as f64),
+            (Block(_), _) | (_, Block(_)) => Null,
+            (a, b)  => (a.as_bool() && b.as_bool()).into(),
+        }
+    }
+}
+
+impl BitOr for Value {
+    type Output = Self;
+    fn bitor(self, other: Self) -> Self {
+        match (self, other) {
+            (Num(a), Num(b)) => Num((a as i64 | b as i64) as f64),
+            (Block(_), _) | (_, Block(_)) => Null,
+            (a, b)  => (a.as_bool() || b.as_bool()).into(),
+        }
+    }
+}
+
 impl Add for Value {
     type Output = Self;
     fn add(self, other: Self) -> Self {
@@ -118,7 +140,7 @@ impl Sub for Value {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
         match (self, other) {
-            (Num(a), Num(b)) => Num(a * b),
+            (Num(a), Num(b)) => Num(a - b),
             _ => Null,
         }
     }
@@ -128,7 +150,7 @@ impl Div for Value {
     type Output = Self;
     fn div(self, other: Self) -> Self {
         match (self, other) {
-            (Num(a), Num(b)) => Num(a * b),
+            (Num(a), Num(b)) => Num(a / b),
             _ => Null,
         }
     }
@@ -138,7 +160,7 @@ impl Rem for Value {
     type Output = Self;
     fn rem(self, other: Self) -> Self {
         match (self, other) {
-            (Num(a), Num(b)) => Num(a * b),
+            (Num(a), Num(b)) => Num(a % b),
             _ => Null,
         }
     }

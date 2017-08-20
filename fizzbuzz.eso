@@ -1,0 +1,16 @@
+"" read num
+
+dup 3 % 0 =
+{ swap "Fizz" + swap }
+{ }
+if ()
+
+dup 5 % 0 =
+{ swap "Buzz" + swap }
+{ }
+if ()
+
+swap dup
+{ }
+{ drop }
+if () _

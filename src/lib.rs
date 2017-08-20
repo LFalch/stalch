@@ -49,8 +49,8 @@ use value::Value;
 use value::Value::*;
 
 fn binop<T: Into<Value>, F: FnOnce(Value, Value) -> T>(s: &mut State, f: F) {
-    let a = s.stack.pop().unwrap();
     let b = s.stack.pop().unwrap();
+    let a = s.stack.pop().unwrap();
 
     s.stack.push(f(a, b).into())
 }
@@ -95,9 +95,9 @@ fn run_command(state: &mut State, cmd: &str) {
                 state.stack.push(!a);
             }
             "if" | "?" => {
-                let condition = state.stack.pop().unwrap();
                 let when_false = state.stack.pop().unwrap();
                 let when_true = state.stack.pop().unwrap();
+                let condition = state.stack.pop().unwrap();
 
                 state.stack.push(if condition.as_bool() {
                     when_true
@@ -121,11 +121,22 @@ fn run_command(state: &mut State, cmd: &str) {
                 line = line.trim_right().to_owned();
                 state.stack.push(Str(line));
             }
+            "$" | "swap" | "exch" => {
+                let a = state.stack.pop().unwrap();
+                let b = state.stack.pop().unwrap();
+                state.stack.push(a);
+                state.stack.push(b);
+            }
+            "drop" => {
+                state.stack.pop().unwrap();
+            }
             "#" | "num" => state.stack.last_mut().unwrap().make_num(),
             "==" | "=" | "eq" => binop(state, |a, b| a == b),
             "!=" | "~=" | "neq" => binop(state, |a, b| a != b),
             ">" | "wrte" => print!("{}", state.stack.pop().unwrap()),
             "_" | "prnt" => println!("{}", state.stack.pop().unwrap()),
+            "||" | "|" | "or" => binop(state, BitOr::bitor),
+            "&&" | "&" | "and" => binop(state, BitAnd::bitand),
             "+" | "add" => binop(state, Add::add),
             "-" | "sub" => binop(state, Sub::sub),
             "*" | "mul" => binop(state, Mul::mul),
