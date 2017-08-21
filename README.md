@@ -78,7 +78,7 @@ Stalch has three commands to pass stuff through STDIN and STDOUT:
 
 #### `prnt` (`_`)
 
-This prints pops the stack and prints it to the screen along with a newline.
+This prints pops the stack and prints the value to STDOUT along with a newline.
 
 #### `wrte` (`>`)
 
@@ -86,7 +86,7 @@ Does the same as `prnt`, but doesn't add a newline.
 
 #### `read` (`<`)
 
-This reads a line from `STDIN` and pushes it to the stack as string
+This reads a line from `STDIN` and pushes it to the stack as a string
 (NOTE: The string will be right trimmed).
 
 ### Stack manipulation
@@ -105,7 +105,7 @@ Running `swap` would make it look as this:
 
 Pops the stack and simply throws away the value.
 
-### `dup`, `;`
+#### `dup`, `;`
 
 Pushes a copy of the current top value to the stack.
 
