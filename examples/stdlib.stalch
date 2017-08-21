@@ -12,3 +12,4 @@ dropall {
 } :=
 
 rev { size 1 - 0 $ { 1 + dup 1 + grab swap } * () drop } :=
+sumBlock { len 1 - { + } * swap () size 1 - grab () } :=

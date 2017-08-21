@@ -113,6 +113,13 @@ fn run_command(state: &mut State, cmd: Command) -> Result<()> {
             let size = state.stack().len() as f64;
             state.push(Num(size))
         }
+        Length => {
+            let to_push = match *state.peek()? {
+                Block(n, ref b) => Num((n as usize * b.len()) as f64),
+                _ => Null
+            };
+            state.push(to_push);
+        }
         Dup => {
             let dup = state.peek()?.clone();
             state.push(dup);
