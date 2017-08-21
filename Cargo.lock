@@ -1,6 +1,6 @@
 [root]
 name = "stalch"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "clap 2.26.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

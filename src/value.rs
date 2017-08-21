@@ -3,7 +3,7 @@ use std::fmt;
 
 use cmd::Command;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Value {
     Num(f64),
     Str(String),
@@ -78,6 +78,25 @@ impl fmt::Display for Value {
     }
 }
 
+impl fmt::Debug for Value {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Num(ref n) => n.fmt(f),
+            Str(ref s) => s.fmt(f),
+            Null => write!(f, "Null"),
+            Block(n, ref b) => {
+                write!(f, "Block")?;
+                let mut dbg = f.debug_set();
+                for _ in 0..n {
+                    dbg.entries(b);
+                }
+                dbg.finish()
+            },
+            Variable(ref s)=> f.debug_tuple("VarName").field(s).finish(),
+        }
+    }
+}
+
 impl Not for Value {
     type Output = Self;
     fn not(self) -> Self {
@@ -120,8 +139,22 @@ impl Add for Value {
                 a.extend(b);
                 Block(1, a)
             }
-            (Block(_, _), _) | (_, Block(_, _)) => panic!("Can't add blocks with other types"),
-            (Variable(_), _) | (_, Variable(_)) => panic!("Variables aren't supposed to be here wtf")
+            (Block(an, a), Block(bn, b)) => {
+                if a == b {
+                    Block(an * bn, a)
+                } else {
+                    let mut res = Vec::with_capacity(an as usize * a.len() + bn as usize * b.len());
+
+                    for _ in 0..an {
+                        res.extend(a.iter().cloned())
+                    }
+                    for _ in 0..bn {
+                        res.extend(b.iter().cloned())
+                    }
+                    Block(1, res)
+                }
+            }
+            _ => Null,
         }
     }
 }
@@ -134,7 +167,7 @@ impl Mul for Value {
             (Num(a), Num(b)) => Num(a * b),
             (Num(n), Block(bn, b)) | (Block(bn, b), Num(n)) => {
                 Block(n as u16 * bn, b)
-            },
+            }
             _ => Null,
         }
     }
