@@ -2,27 +2,21 @@
 
 use std::fs::File;
 use std::io::Read;
-use std::collections::HashMap;
 
-pub struct State {
-    pub stack: Vec<Value>,
-    vars: HashMap<String, Value>,
-    block_nesting: u8,
-    temp: Vec<Command>
-}
 
-impl State {
-    pub fn new() -> Self {
-        State {
-            block_nesting: 0,
-            stack: Vec::new(),
-            vars: HashMap::new(),
-            temp: Vec::new()
-        }
-    }
-}
+mod value;
+mod cmd;
+mod state;
+mod err;
 
-pub fn run_with_state<R: Read>(src: R, state: &mut State) {
+use value::Value;
+use value::Value::*;
+use cmd::Command;
+use cmd::Command::*;
+pub use state::State;
+pub use err::{Result, Error};
+
+pub fn run_with_state<R: Read>(src: R, state: &mut State) -> Result<()> {
     let mut buf = String::new();
     let mut ignoring_whitespace = false;
 
@@ -31,7 +25,7 @@ pub fn run_with_state<R: Read>(src: R, state: &mut State) {
             Ok(c) => {
                 if c.is_whitespace() && !ignoring_whitespace {
                     if !buf.is_empty() {
-                        run_command(state, Command::from_str(&buf));
+                        run_command(state, Command::from_str(&buf))?;
                         buf.clear();
                     }
                 } else {
@@ -41,32 +35,27 @@ pub fn run_with_state<R: Read>(src: R, state: &mut State) {
                     buf.push(c);
                 }
             },
-            Err(e) => panic!("{:?}", e)
+            Err(e) => return Err(Error::CharsError(e))
         }
     }
+
+    Ok(())
 }
 
-mod value;
-use value::Value;
-use value::Value::*;
+fn binop<T: Into<Value>, F: FnOnce(Value, Value) -> T>(s: &mut State, f: F) -> Result<()> {
+    let b = s.pop()?;
+    let a = s.pop()?;
 
-mod cmd;
-use cmd::Command;
-use cmd::Command::*;
-
-fn binop<T: Into<Value>, F: FnOnce(Value, Value) -> T>(s: &mut State, f: F) {
-    let b = s.stack.pop().unwrap();
-    let a = s.stack.pop().unwrap();
-
-    s.stack.push(f(a, b).into())
+    s.push(f(a, b).into());
+    Ok(())
 }
 
 use std::ops;
 use std::mem::replace;
 
-fn run_command(state: &mut State, cmd: Command) {
+fn run_command(state: &mut State, cmd: Command) -> Result<()> {
     if cfg!(feature = "debug") {
-        println!("{f}  {indent}{:?}: {:?}", cmd, state.stack,
+        println!("{f}  {indent}{:?}: {:?}", cmd, state.stack(),
             f = if cmd == BeginBlock {"\n"}else{""},
             indent = "    ".repeat((state.block_nesting as usize)
             .saturating_sub(if cmd == EndBlock {1}else{0})),
@@ -75,12 +64,12 @@ fn run_command(state: &mut State, cmd: Command) {
 
     match cmd {
         EndBlock => match state.block_nesting {
-            0 => panic!("Can't end block when none is begun"),
+            0 => return Err(Error::NoBlockStarted),
             1 => {
                 state.block_nesting = 0;
 
                 let t = replace(&mut state.temp, Vec::new());
-                state.stack.push(Block(1, t));
+                state.push(Block(1, t));
             }
             _ => {
                 state.block_nesting -= 1;
@@ -95,113 +84,113 @@ fn run_command(state: &mut State, cmd: Command) {
         }
         ref cmd if state.block_nesting > 0 => state.temp.push(cmd.clone()),
         Value(s) => if s.starts_with('"') {
-            state.stack.push(Str(s[1..s.len()-1].to_owned()));
+            state.push(Str(s[1..s.len()-1].to_owned()));
         } else if let Ok(n) = s.parse::<f64>() {
-            state.stack.push(Num(n));
+            state.push(Num(n));
         } else {
-            if let Some(v) = state.vars.get(&s) {
-                state.stack.push(v.clone());
+            let to_push;
+            if let Some(v) = state.get_var(&s) {
+                to_push = v.clone();
             } else {
-                state.stack.push(Variable(s));
+                to_push = Variable(s);
             }
+            state.push(to_push);
         }
-        EmptyBlock => state.stack.push(Block(1, Vec::new())),
+        EmptyBlock => state.push(Block(1, Vec::new())),
         Include => {
-            match state.stack.pop().unwrap() {
+            match state.pop()? {
                 Str(s) => {
-                    let file = File::open(s).unwrap();
+                    let file = File::open(s)?;
                     run_with_state(file, state);
                 }
-                _ => panic!("Can only include strings")
+                _ => return Err(Error::InvalidIncludeArg)
             }
         }
-        True => state.stack.push(Num(1.)),
-        False => state.stack.push(Num(0.)),
-        NullVal => state.stack.push(Value::Null),
+        True => state.push(Num(1.)),
+        False => state.push(Num(0.)),
+        NullVal => state.push(Value::Null),
         Dup => {
-            let dup = state.stack.last().cloned().unwrap();
-            state.stack.push(dup);
+            let dup = state.peek()?.clone();
+            state.push(dup);
         }
         Not => {
-            let a = state.stack.pop().unwrap();
-            state.stack.push(!a);
+            let a = state.pop()?;
+            state.push(!a);
         }
         If => {
-            let when_false = state.stack.pop().unwrap();
-            let when_true = state.stack.pop().unwrap();
-            let condition = state.stack.pop().unwrap();
+            let when_false = state.pop()?;
+            let when_true = state.pop()?;
+            let condition = state.pop()?;
 
-            state.stack.push(if condition.as_bool() {
+            state.push(if condition.as_bool() {
                 when_true
             } else {
                 when_false
             });
         }
         Assign => {
-            match (state.stack.pop().unwrap(), state.stack.pop().unwrap()) {
-                (Variable(_), Variable(_)) => panic!("Can't assign variable to variable"),
-                (Variable(h), v) | (v, Variable(h)) => {
-                    state.vars.insert(h, v);
-                }
-                _ => panic!("Can't assign to other than a variable")
+            match (state.pop()?, state.pop()?) {
+                (Variable(_), Variable(_)) => return Err(Error::InvalidAssignArg),
+                (Variable(h), v) | (v, Variable(h)) => state.add_var(h, v),
+                _ => return Err(Error::InvalidAssignArg),
             }
         }
         ApplyFunction => {
-            match state.stack.pop() {
-                Some(Block(n, b)) => {
+            match state.pop()? {
+                Block(n, b) => {
                     for _ in 0..n {
                         for cmd in &b {
                             run_command(state, cmd.clone());
                         }
                     }
                 }
-                _ => panic!("No block on stack")
+                _ => return Err(Error::InvalidApplyArg)
             }
         }
         Read => {
             let mut line = String::new();
-            std::io::stdin().read_line(&mut line).unwrap();
+            std::io::stdin().read_line(&mut line)?;
             line = line.trim_right().to_owned();
-            state.stack.push(Str(line));
+            state.push(Str(line));
         }
         Swap => {
-            let a = state.stack.pop().unwrap();
-            let b = state.stack.pop().unwrap();
-            state.stack.push(a);
-            state.stack.push(b);
+            let a = state.pop()?;
+            let b = state.pop()?;
+            state.push(a);
+            state.push(b);
         }
-        Grab => {
-            let i = match state.stack.pop().unwrap() {
-                Num(n) => state.stack.len() - n as usize - 1,
-                _ => panic!("Can only grab numbers")
-            };
+        Grab => match state.pop()? {
+            Num(n) => {
+                let n_elem = state.take_nth(n as usize)?;
 
-            let n_elem = state.stack.remove(i);
-            state.stack.push(n_elem);
+                state.push(n_elem);
+            },
+            _ => return Err(Error::InvalidGrabArg)
         }
-        DupGrab => {
-            let i = match state.stack.pop().unwrap() {
-                Num(n) => state.stack.len() - n as usize - 1,
-                _ => panic!("Can only grab numbers")
-            };
+        DupGrab => match state.pop()? {
+            Num(n) => {
+                let n_elem = state.nth(n as usize)?.clone();
 
-            let n_elem = state.stack[i].clone();
-            state.stack.push(n_elem);
+                state.push(n_elem);
+            },
+            _ => return Err(Error::InvalidGrabArg)
         }
         Drop => {
-            state.stack.pop().unwrap();
+            state.pop()?;
         }
-        CastNum => state.stack.last_mut().unwrap().make_num(),
-        Eq => binop(state, |a, b| a == b),
-        Neq => binop(state, |a, b| a != b),
-        Write => print!("{}", state.stack.pop().unwrap()),
-        Print => println!("{}", state.stack.pop().unwrap()),
-        Or => binop(state, ops::BitOr::bitor),
-        And => binop(state, ops::BitAnd::bitand),
-        Add => binop(state, ops::Add::add),
-        Sub => binop(state, ops::Sub::sub),
-        Mul => binop(state, ops::Mul::mul),
-        Div => binop(state, ops::Div::div),
-        Rem => binop(state, ops::Rem::rem)
+        CastNum => state.last_mut()?.make_num(),
+        Eq => binop(state, |a, b| a == b)?,
+        Neq => binop(state, |a, b| a != b)?,
+        Write => print!("{}", state.pop()?),
+        Print => println!("{}", state.pop()?),
+        Or => binop(state, ops::BitOr::bitor)?,
+        And => binop(state, ops::BitAnd::bitand)?,
+        Add => binop(state, ops::Add::add)?,
+        Sub => binop(state, ops::Sub::sub)?,
+        Mul => binop(state, ops::Mul::mul)?,
+        Div => binop(state, ops::Div::div)?,
+        Rem => binop(state, ops::Rem::rem)?
     }
+
+    Ok(())
 }

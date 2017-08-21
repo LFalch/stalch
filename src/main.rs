@@ -5,6 +5,8 @@ use std::fs::File;
 use clap::{Arg, App};
 
 use std::io::{stdin, stdout, Write};
+use stalch::{run_with_state, Error, State};
+use stalch::Error::*;
 
 fn main() {
     let matches = App::new(env!("CARGO_PKG_NAME"))
@@ -19,7 +21,7 @@ fn main() {
                                .long("interactive")
                                .help("Starts interactive shell"))
                           .get_matches();
-    let mut state = stalch::State::new();
+    let mut state = State::new();
 
     if matches.is_present("interactive") {
         println!("Stalch Interactive Shell");
@@ -34,14 +36,33 @@ fn main() {
                 println!();
                 break
             }
-            stalch::run_with_state(s.as_bytes(), &mut state);
-            println!(" >{:?}", state.stack);
+            match run_with_state(s.as_bytes(), &mut state) {
+                Ok(()) => (),
+                Err(e) => handle_error(e),
+            }
+            println!(" >{:?}", state.stack());
         }
     } else {
         let src = matches.value_of("SOURCE").unwrap();
 
         let file = File::open(src).unwrap();
-        stalch::run_with_state(file, &mut state);
+        match run_with_state(file, &mut state) {
+            Ok(()) => (),
+            Err(e) => handle_error(e),
+        }
     }
+}
 
+fn handle_error(e: Error) {
+    match e {
+        IoError(e) => panic!("Unexpected error:\n{:?}", e),
+        CharsError(e) => panic!("Unexpected error:\n{:?}", e),
+        EmptyStack => eprintln!("Error, empty stack"),
+        OutOfBounds => eprintln!("Error, out of bounds"),
+        InvalidAssignArg => eprintln!("Error, can only assign value to a variable name"),
+        InvalidApplyArg => eprintln!("Error, can only execute blocks"),
+        InvalidGrabArg => eprintln!("Error, can only take number as grab argument"),
+        InvalidIncludeArg => eprintln!("Error, include can only take a string"),
+        NoBlockStarted => eprintln!("Error, cannot end a block when none has been started")
+    }
 }
