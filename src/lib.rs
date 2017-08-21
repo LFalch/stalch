@@ -101,7 +101,7 @@ fn run_command(state: &mut State, cmd: Command) -> Result<()> {
             match state.pop()? {
                 Str(s) => {
                     let file = File::open(s)?;
-                    run_with_state(file, state);
+                    run_with_state(file, state)?;
                 }
                 _ => return Err(Error::InvalidIncludeArg)
             }
@@ -109,6 +109,10 @@ fn run_command(state: &mut State, cmd: Command) -> Result<()> {
         True => state.push(Num(1.)),
         False => state.push(Num(0.)),
         NullVal => state.push(Value::Null),
+        Size => {
+            let size = state.stack().len() as f64;
+            state.push(Num(size))
+        }
         Dup => {
             let dup = state.peek()?.clone();
             state.push(dup);
@@ -140,7 +144,7 @@ fn run_command(state: &mut State, cmd: Command) -> Result<()> {
                 Block(n, b) => {
                     for _ in 0..n {
                         for cmd in &b {
-                            run_command(state, cmd.clone());
+                            run_command(state, cmd.clone())?;
                         }
                     }
                 }

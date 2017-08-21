@@ -6,3 +6,7 @@ forrange [
 
 \n "
 " :=
+
+dropall {
+    size { drop } * ()
+} :=
