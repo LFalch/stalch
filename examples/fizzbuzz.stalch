@@ -23,7 +23,6 @@ if ()
 
 "How far do you wanna go?" _
 read num dup
-"Doing FizzBuzz from 1 to " swap + "
-" + _
+"Doing FizzBuzz from 1 to " swap + \n + _
 
 forrange ()

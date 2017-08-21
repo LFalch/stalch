@@ -4,15 +4,15 @@ use std::fs::File;
 use std::io::Read;
 use std::collections::HashMap;
 
-struct State {
-    stack: Vec<Value>,
+pub struct State {
+    pub stack: Vec<Value>,
     vars: HashMap<String, Value>,
     block_nesting: u8,
     temp: Vec<Command>
 }
 
 impl State {
-    fn new() -> Self{
+    pub fn new() -> Self {
         State {
             block_nesting: 0,
             stack: Vec::new(),
@@ -22,16 +22,11 @@ impl State {
     }
 }
 
-pub fn run_program(src_file: File) {
-    let mut state = State::new();
-    run_with_state(src_file, &mut state);
-}
-
-fn run_with_state(src_file: File, state: &mut State) {
+pub fn run_with_state<R: Read>(src: R, state: &mut State) {
     let mut buf = String::new();
     let mut ignoring_whitespace = false;
 
-    for c in src_file.chars() {
+    for c in src.chars() {
         match c {
             Ok(c) => {
                 if c.is_whitespace() && !ignoring_whitespace {
