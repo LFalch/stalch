@@ -4,6 +4,7 @@ use std::io::{Error as IoError, CharsError};
 #[must_use]
 pub type Result<T> = StdResult<T, Error>;
 
+#[derive(Debug)]
 pub enum Error {
     EmptyStack,
     OutOfBounds,

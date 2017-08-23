@@ -4,11 +4,14 @@ use value::Value;
 use cmd::Command;
 use err::*;
 
+use std::io::Write;
+
 pub struct State {
     stack: Vec<Value>,
     pub block_nesting: u8,
     vars: HashMap<String, Value>,
-    pub temp: Vec<Command>
+    pub temp: Vec<Command>,
+    pub custom_stdout: Option<Box<Write>>
 }
 
 impl State {
@@ -17,7 +20,17 @@ impl State {
             block_nesting: 0,
             stack: Vec::new(),
             vars: HashMap::new(),
-            temp: Vec::new()
+            temp: Vec::new(),
+            custom_stdout: None,
+        }
+    }
+    pub fn with_custom_stdout(writer: Box<Write>) -> Self {
+        State {
+            block_nesting: 0,
+            stack: Vec::new(),
+            vars: HashMap::new(),
+            temp: Vec::new(),
+            custom_stdout: Some(writer)
         }
     }
     #[inline(always)]

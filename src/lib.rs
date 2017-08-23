@@ -192,8 +192,22 @@ fn run_command(state: &mut State, cmd: Command) -> Result<()> {
         CastNum => state.last_mut()?.make_num(),
         Eq => binop(state, |a, b| a == b)?,
         Neq => binop(state, |a, b| a != b)?,
-        Write => print!("{}", state.pop()?),
-        Print => println!("{}", state.pop()?),
+        Write => {
+            let val = state.pop()?;
+            if let Some(ref mut w) = state.custom_stdout {
+                write!(w, "{}", val)?;
+            } else {
+                print!("{}", val);
+            }
+        }
+        Print => {
+            let val = state.pop()?;
+            if let Some(ref mut w) = state.custom_stdout {
+                write!(w, "{}\n", val)?;
+            } else {
+                println!("{}", val);
+            }
+        }
         Or => binop(state, ops::BitOr::bitor)?,
         And => binop(state, ops::BitAnd::bitand)?,
         Add => binop(state, ops::Add::add)?,
