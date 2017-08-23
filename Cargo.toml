@@ -5,7 +5,12 @@ authors = ["LFalch <lucas@wasd.dk>"]
 description = "stack-based esolang"
 
 [dependencies]
-clap = "2.26"
+clap = { version = "2.26", optional = true }
+
+[[bin]]
+name = "stalch"
+doc = false
+required-features = ["clap"]
 
 [features]
 debug = []
