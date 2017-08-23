@@ -4,33 +4,36 @@ use value::Value;
 use cmd::Command;
 use err::*;
 
-use std::io::Write;
+use std::io::{self, Write, Stdout};
 
-pub struct State {
+pub struct State<W: Write> {
     stack: Vec<Value>,
     pub block_nesting: u8,
     vars: HashMap<String, Value>,
     pub temp: Vec<Command>,
-    pub custom_stdout: Option<Box<Write>>
+    pub stdout: W
 }
 
-impl State {
+impl State<Stdout> {
     pub fn new() -> Self {
         State {
             block_nesting: 0,
             stack: Vec::new(),
             vars: HashMap::new(),
             temp: Vec::new(),
-            custom_stdout: None,
+            stdout: io::stdout(),
         }
     }
-    pub fn with_custom_stdout(writer: Box<Write>) -> Self {
+}
+
+impl<W: Write> State<W> {
+    pub fn with_custom_stdout(writer: W) -> Self {
         State {
             block_nesting: 0,
             stack: Vec::new(),
             vars: HashMap::new(),
             temp: Vec::new(),
-            custom_stdout: Some(writer)
+            stdout: writer
         }
     }
     #[inline(always)]

@@ -1,7 +1,7 @@
 #![feature(io)]
 
 use std::fs::File;
-use std::io::Read;
+use std::io::{Write, Read};
 
 
 mod value;
@@ -16,7 +16,7 @@ use cmd::Command::*;
 pub use state::State;
 pub use err::{Result, Error};
 
-pub fn run_with_state<R: Read>(src: R, state: &mut State) -> Result<()> {
+pub fn run_with_state<R: Read, W: Write>(src: R, state: &mut State<W>) -> Result<()> {
     let mut buf = String::new();
     let mut ignoring_whitespace = false;
 
@@ -42,7 +42,7 @@ pub fn run_with_state<R: Read>(src: R, state: &mut State) -> Result<()> {
     Ok(())
 }
 
-fn binop<T: Into<Value>, F: FnOnce(Value, Value) -> T>(s: &mut State, f: F) -> Result<()> {
+fn binop<T: Into<Value>, F: FnOnce(Value, Value) -> T, W: Write>(s: &mut State<W>, f: F) -> Result<()> {
     let b = s.pop()?;
     let a = s.pop()?;
 
@@ -53,7 +53,7 @@ fn binop<T: Into<Value>, F: FnOnce(Value, Value) -> T>(s: &mut State, f: F) -> R
 use std::ops;
 use std::mem::replace;
 
-fn run_command(state: &mut State, cmd: Command) -> Result<()> {
+fn run_command<W: Write>(state: &mut State<W>, cmd: Command) -> Result<()> {
     if cfg!(feature = "debug") {
         println!("{f}  {indent}{:?}: {:?}", cmd, state.stack(),
             f = if cmd == BeginBlock {"\n"}else{""},
@@ -194,19 +194,11 @@ fn run_command(state: &mut State, cmd: Command) -> Result<()> {
         Neq => binop(state, |a, b| a != b)?,
         Write => {
             let val = state.pop()?;
-            if let Some(ref mut w) = state.custom_stdout {
-                write!(w, "{}", val)?;
-            } else {
-                print!("{}", val);
-            }
+            write!(state.stdout, "{}", val)?;
         }
         Print => {
             let val = state.pop()?;
-            if let Some(ref mut w) = state.custom_stdout {
-                write!(w, "{}\n", val)?;
-            } else {
-                println!("{}", val);
-            }
+            write!(state.stdout, "{}\n", val)?;
         }
         Or => binop(state, ops::BitOr::bitor)?,
         And => binop(state, ops::BitAnd::bitand)?,
