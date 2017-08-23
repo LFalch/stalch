@@ -5,7 +5,7 @@ use std::fs::File;
 use clap::{Arg, App};
 
 use std::io::{stdin, stdout, Write};
-use stalch::{run_with_state, Error, State};
+use stalch::*;
 use stalch::Error::*;
 
 fn main() {
@@ -22,6 +22,7 @@ fn main() {
                                .help("Starts interactive shell"))
                           .get_matches();
     let mut state = State::new();
+    let mut stdouter = InOuter::new(stdout(), stdin());
 
     if matches.is_present("interactive") {
         println!("Stalch Interactive Shell");
@@ -36,7 +37,7 @@ fn main() {
                 println!();
                 break
             }
-            match run_with_state(s.as_bytes(), &mut state) {
+            match run_with_state(s.as_bytes(), &mut state, &mut stdouter) {
                 Ok(()) => (),
                 Err(e) => handle_error(e),
             }
@@ -46,7 +47,7 @@ fn main() {
         let src = matches.value_of("SOURCE").unwrap();
 
         let file = File::open(src).unwrap();
-        match run_with_state(file, &mut state) {
+        match run_with_state(file, &mut state, &mut stdouter) {
             Ok(()) => (),
             Err(e) => handle_error(e),
         }

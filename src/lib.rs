@@ -1,7 +1,7 @@
 #![feature(io)]
 
 use std::fs::File;
-use std::io::{Write, Read};
+use std::io::{Write, Read, BufRead, BufReader};
 
 
 mod value;
@@ -16,7 +16,26 @@ use cmd::Command::*;
 pub use state::State;
 pub use err::{Result, Error};
 
-pub fn run_with_state<R: Read, W: Write>(src: R, state: &mut State<W>) -> Result<()> {
+pub struct InOuter<W: Write, R: Read> {
+    o: W,
+    i: BufReader<R>,
+}
+
+impl<W: Write, R: Read> InOuter<W, R> {
+    pub fn new(o: W, i: R) -> Self {
+        InOuter {
+            o,
+            i: BufReader::new(i),
+        }
+    }
+    pub fn extract(self) -> (W, R) {
+        let InOuter{i, o} = self;
+        (o, i.into_inner())
+    }
+}
+
+pub fn run_with_state<R, R2, W>(src: R, state: &mut State, io: &mut InOuter<W, R2>) -> Result<()>
+where R: Read, R2: Read, W: Write {
     let mut buf = String::new();
     let mut ignoring_whitespace = false;
 
@@ -25,7 +44,7 @@ pub fn run_with_state<R: Read, W: Write>(src: R, state: &mut State<W>) -> Result
             Ok(c) => {
                 if c.is_whitespace() && !ignoring_whitespace {
                     if !buf.is_empty() {
-                        run_command(state, Command::from_str(&buf))?;
+                        run_command(state, Command::from_str(&buf), io)?;
                         buf.clear();
                     }
                 } else {
@@ -42,7 +61,7 @@ pub fn run_with_state<R: Read, W: Write>(src: R, state: &mut State<W>) -> Result
     Ok(())
 }
 
-fn binop<T: Into<Value>, F: FnOnce(Value, Value) -> T, W: Write>(s: &mut State<W>, f: F) -> Result<()> {
+fn binop<T: Into<Value>, F: FnOnce(Value, Value) -> T>(s: &mut State, f: F) -> Result<()> {
     let b = s.pop()?;
     let a = s.pop()?;
 
@@ -53,7 +72,7 @@ fn binop<T: Into<Value>, F: FnOnce(Value, Value) -> T, W: Write>(s: &mut State<W
 use std::ops;
 use std::mem::replace;
 
-fn run_command<W: Write>(state: &mut State<W>, cmd: Command) -> Result<()> {
+fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOuter<W, R>) -> Result<()> {
     if cfg!(feature = "debug") {
         println!("{f}  {indent}{:?}: {:?}", cmd, state.stack(),
             f = if cmd == BeginBlock {"\n"}else{""},
@@ -101,7 +120,7 @@ fn run_command<W: Write>(state: &mut State<W>, cmd: Command) -> Result<()> {
             match state.pop()? {
                 Str(s) => {
                     let file = File::open(s)?;
-                    run_with_state(file, state)?;
+                    run_with_state(file, state, io)?;
                 }
                 _ => return Err(Error::InvalidIncludeArg)
             }
@@ -151,7 +170,7 @@ fn run_command<W: Write>(state: &mut State<W>, cmd: Command) -> Result<()> {
                 Block(n, b) => {
                     for _ in 0..n {
                         for cmd in &b {
-                            run_command(state, cmd.clone())?;
+                            run_command(state, cmd.clone(), io)?;
                         }
                     }
                 }
@@ -160,7 +179,7 @@ fn run_command<W: Write>(state: &mut State<W>, cmd: Command) -> Result<()> {
         }
         Read => {
             let mut line = String::new();
-            std::io::stdin().read_line(&mut line)?;
+            io.i.read_line(&mut line)?;
             line = line.trim_right().to_owned();
             state.push(Str(line));
         }
@@ -192,14 +211,8 @@ fn run_command<W: Write>(state: &mut State<W>, cmd: Command) -> Result<()> {
         CastNum => state.last_mut()?.make_num(),
         Eq => binop(state, |a, b| a == b)?,
         Neq => binop(state, |a, b| a != b)?,
-        Write => {
-            let val = state.pop()?;
-            write!(state.stdout, "{}", val)?;
-        }
-        Print => {
-            let val = state.pop()?;
-            write!(state.stdout, "{}\n", val)?;
-        }
+        Write => write!(io.o, "{}", state.pop()?)?,
+        Print => write!(io.o, "{}\n", state.pop()?)?,
         Or => binop(state, ops::BitOr::bitor)?,
         And => binop(state, ops::BitAnd::bitand)?,
         Add => binop(state, ops::Add::add)?,
