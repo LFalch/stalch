@@ -96,43 +96,57 @@ fn read_one_byte(reader: &mut Read) -> Option<Result<u8>> {
     }
 }
 
-// https://tools.ietf.org/html/rfc3629
-static UTF8_CHAR_WIDTH: [u8; 256] = [
-1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 0x1F
-1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 0x3F
-1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 0x5F
-1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 0x7F
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 0x9F
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 0xBF
-0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // 0xDF
-3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, // 0xEF
-4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0, // 0xFF
-];
-
 /// Given a first byte, determines how many bytes are in this UTF-8 character.
 #[inline]
 pub fn utf8_char_width(b: u8) -> usize {
-    return UTF8_CHAR_WIDTH[b as usize] as usize;
+    match b {
+        0...0x7f => 1,
+        0xc2...0xdf => 2,
+        0xe0...0xef => 3,
+        0xf0...0xf4 => 4,
+        0x80...0xc1 | 0xf5...0xff => 0,
+        _ => unreachable!(),
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use CharsExt;
+    use super::CharsExt;
 
     use std::io::Cursor;
 
+    // https://tools.ietf.org/html/rfc3629
+    static UTF8_CHAR_WIDTH: [u8; 256] = [
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 0x1F
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 0x3F
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 0x5F
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 0x7F
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 0x9F
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 0xBF
+        0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // 0xDF
+        3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, // 0xEF
+        4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0, // 0xFF
+    ];
+
+    #[test]
+    pub fn char_width() {
+        for i in 0..256 {
+            assert_eq!(super::utf8_char_width(i as u8) as u8, UTF8_CHAR_WIDTH[i]);
+        }
+    }
+
     #[test]
     fn chars_iterator_works() {
-        let mut s = "hello, I'm cool".to_owned();
+        let s = "hello, I'm cool".to_owned();
 
-        let c = Cursor::new(s..into_bytes());
+        let c = Cursor::new(s.clone().into_bytes());
 
         let v: Vec<char> = c.chars_iterator().flat_map(Result::ok).collect();
         let v2: Vec<char> = s.chars().collect();
