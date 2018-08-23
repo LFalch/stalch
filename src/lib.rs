@@ -1,14 +1,13 @@
-#![feature(io)]
-
 use std::fs::File;
 use std::io::{Write, Read, BufRead, BufReader};
 
-
+mod chars;
 mod value;
 mod cmd;
 mod state;
 mod err;
 
+use chars::*;
 use value::Value;
 use value::Value::*;
 use cmd::Command;
@@ -39,7 +38,7 @@ where R: Read, R2: Read, W: Write {
     let mut buf = String::new();
     let mut ignoring_whitespace = false;
 
-    for c in src.chars() {
+    for c in src.chars_iterator() {
         match c {
             Ok(c) => {
                 if c.is_whitespace() && !ignoring_whitespace {
