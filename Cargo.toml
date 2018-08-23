@@ -5,7 +5,7 @@ authors = ["LFalch <lucas@wasd.dk>"]
 description = "stack-based esolang"
 
 [dependencies]
-clap = { version = "2.26", optional = true }
+clap = { version = ">=2.26, <=2.32", optional = true }
 
 [[bin]]
 name = "stalch"
