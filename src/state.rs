@@ -35,27 +35,25 @@ impl State {
     pub fn peek(&self) -> Result<&Value> {
         self.stack.last().ok_or(Error::EmptyStack)
     }
+    #[inline]
+    fn index(&self, n: usize) -> Result<usize> {
+        self.stack.len().checked_sub(n+1).ok_or(Error::OutOfBounds)
+    }
+    #[inline]
+    pub fn insert(&mut self, n: usize, val: Value) -> Result<()> {
+        self.index(n)
+            .map(|i| self.stack.insert(i, val))
+    }
     pub fn nth(&self, n: usize) -> Result<&Value> {
-        let index = self.stack.len().checked_sub(n+1);
-
-        if let Some(i) = index {
-            Ok(&self.stack[i])
-        } else {
-            Err(Error::OutOfBounds)
-        }
+        Ok(&self.stack[self.index(n)?])
     }
     #[inline(always)]
     pub fn last_mut(&mut self) -> Result<&mut Value> {
         self.stack.last_mut().ok_or(Error::EmptyStack)
     }
     pub fn take_nth(&mut self, n: usize) -> Result<Value> {
-        let index = self.stack.len().checked_sub(n+1);
-
-        if let Some(i) = index {
-            Ok(self.stack.remove(i))
-        } else {
-            Err(Error::OutOfBounds)
-        }
+        let index = self.index(n)?;
+        Ok(self.stack.remove(index))
     }
     #[inline(always)]
     pub fn get_var(&self, var: &str) -> Option<&Value> {

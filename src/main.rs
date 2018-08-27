@@ -62,6 +62,9 @@ fn handle_error(e: Error) {
         OutOfBounds => eprintln!("Error, out of bounds"),
         InvalidAssignArg => eprintln!("Error, can only assign value to a variable name"),
         InvalidApplyArg => eprintln!("Error, can only execute blocks"),
+        InvalidSplitArg => eprintln!("Error, split takes a number and a block or string"),
+        InvalidGetArg => eprintln!("Error, get takes a number and a block or string"),
+        InvalidMoveArg => eprintln!("Error, move takes a number and one other value"),
         InvalidGrabArg => eprintln!("Error, can only take number as grab argument"),
         InvalidIncludeArg => eprintln!("Error, include can only take a string"),
         NoBlockStarted => eprintln!("Error, cannot end a block when none has been started")

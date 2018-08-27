@@ -134,6 +134,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         Length => {
             let to_push = match *state.peek()? {
                 Block(n, ref b) => Num((n as usize * b.len()) as f64),
+                Str(ref s) => Num(s.chars().count() as f64),
                 _ => Null
             };
             state.push(to_push);
@@ -173,6 +174,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
                         }
                     }
                 }
+                s @ Str(_) => state.push(s),
                 _ => return Err(Error::InvalidApplyArg)
             }
         }
@@ -187,6 +189,107 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
             let b = state.pop()?;
             state.push(a);
             state.push(b);
+        }
+        Split => {
+            let i = match state.pop()? {
+                Num(n) => n,
+                _ => return Err(Error::InvalidSplitArg)
+            } as usize;
+
+            match state.pop()?.flatten() {
+                Block(n, mut b) => {
+                    debug_assert_eq!(n, 1, "value has been flattened");
+
+                    let i = b.len().checked_sub(i).ok_or(Error::OutOfBounds)?;
+
+                    let right = b.split_off(i);
+                    state.push(Block(1, b));
+                    state.push(Block(1, right));
+                }
+                Str(mut s) => {
+                    let len = s.chars().count();
+                    let byte_len = s.len();
+
+                    let i = len.checked_sub(i).ok_or(Error::OutOfBounds)?;
+
+                    let real_index = s.char_indices().chain(Some((byte_len, '\x00'))).nth(i).ok_or(Error::OutOfBounds)?.0;
+                    let right = s.split_off(real_index);
+                    state.push(Str(s));
+                    state.push(Str(right));
+                }
+                _ => return Err(Error::InvalidSplitArg)
+            }
+        }
+        Get => {
+            let i = match state.pop()? {
+                Num(n) => n,
+                _ => return Err(Error::InvalidGetArg)
+            } as usize;
+
+            match state.pop()?.flatten() {
+                Block(n, mut b) => {
+                    debug_assert_eq!(n, 1, "value has been flattened");
+
+                    let i = b.len().checked_sub(i+1).ok_or(Error::OutOfBounds)?;
+
+                    let cmd = b.remove(i);
+                    state.push(Block(1, b));
+                    state.push(Block(1, vec![cmd]));
+                }
+                Str(mut s) => {
+                    let len = s.chars().count();
+                    let byte_len = s.len();
+
+                    let i = len.checked_sub(i).ok_or(Error::OutOfBounds)?;
+
+                    let real_index = s.char_indices().chain(Some((byte_len, '\x00'))).nth(i).ok_or(Error::OutOfBounds)?.0;
+                    let right = s.split_off(real_index);
+
+                    let c = s.pop().ok_or(Error::OutOfBounds)?.to_string();
+
+                    s += &right;
+
+                    state.push(Str(s));
+                    state.push(Str(c));
+                }
+                _ => return Err(Error::InvalidGetArg)
+            }
+        }
+        DupGet => {
+            let i = match state.pop()? {
+                Num(n) => n,
+                _ => return Err(Error::InvalidGetArg)
+            } as usize;
+
+            let val = match state.peek()? {
+                Block(n, b) => {
+                    let len = *n as usize * b.len();
+                    let i = len.checked_sub(i+1).ok_or(Error::OutOfBounds)?;
+
+                    let real_index = i % b.len();
+
+                    let cmd = b[real_index].clone();
+
+                    Block(1, vec![cmd])
+                }
+                Str(s) => {
+                    let c = s.chars().rev().nth(i).ok_or(Error::OutOfBounds)?;
+
+                    Str(c.to_string())
+                }
+                _ => return Err(Error::InvalidGetArg)
+            };
+
+            state.push(val);
+        }
+        Move => match state.pop()? {
+            Num(n) => {
+                let elem = state.peek()?.clone();
+
+                state.insert(n as usize, elem)?;
+                state.pop()?;
+            },
+            _ => return Err(Error::InvalidMoveArg)
         }
         Grab => match state.pop()? {
             Num(n) => {
