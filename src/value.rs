@@ -41,6 +41,17 @@ impl Value {
         };
         *self = repl;
     }
+    pub fn flatten(self) -> Self {
+        match self {
+            Block(n, b) => {
+                let len = n as usize * b.len();
+                let b = b.into_iter().cycle().take(len).collect();
+
+                Block(1, b)
+            }
+            a => a,
+        }
+    }
 }
 
 impl From<bool> for Value {
