@@ -131,8 +131,8 @@ impl Add for Value {
     fn add(self, other: Self) -> Self {
         match (self, other) {
             (Null, b) => b,
-            (a, Null) => a,
             (Str(a), b)  => Str(format!("{}{}", a, b)),
+            (a, Null) => a,
             (Num(a), Str(b))  => Str(format!("{}{}", a, b)),
             (Num(a), Num(b)) => Num(a + b),
             (Block(1, mut a), Block(1, b)) => {
@@ -141,7 +141,7 @@ impl Add for Value {
             }
             (Block(an, a), Block(bn, b)) => {
                 if a == b {
-                    Block(an * bn, a)
+                    Block(an + bn, a)
                 } else {
                     let mut res = Vec::with_capacity(an as usize * a.len() + bn as usize * b.len());
 

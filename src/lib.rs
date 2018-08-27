@@ -134,6 +134,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         Length => {
             let to_push = match *state.peek()? {
                 Block(n, ref b) => Num((n as usize * b.len()) as f64),
+                Str(ref s) => Num(s.len() as f64),
                 _ => Null
             };
             state.push(to_push);
@@ -187,6 +188,27 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
             let b = state.pop()?;
             state.push(a);
             state.push(b);
+        }
+        Split => {
+            match state.pop()? {
+                Block(n, b) => {
+                    let bl = n as f64 * b;
+                    bl
+                }
+                Str(s) => {
+
+                }
+                _ => return Err(Error::InvalidSplitArg)
+            }
+        }
+        Get => {
+
+        }
+        DupGet => {
+
+        }
+        Move => {
+
         }
         Grab => match state.pop()? {
             Num(n) => {
