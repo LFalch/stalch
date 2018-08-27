@@ -174,6 +174,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
                         }
                     }
                 }
+                s @ Str(_) => state.push(s),
                 _ => return Err(Error::InvalidApplyArg)
             }
         }
