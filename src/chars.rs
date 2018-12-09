@@ -137,8 +137,8 @@ mod tests {
 
     #[test]
     pub fn char_width() {
-        for i in 0..256 {
-            assert_eq!(super::utf8_char_width(i as u8) as u8, UTF8_CHAR_WIDTH[i]);
+        for i in 0..=255 {
+            assert_eq!(super::utf8_char_width(i) as u8, UTF8_CHAR_WIDTH[i as usize]);
         }
     }
 

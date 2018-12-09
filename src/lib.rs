@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+
 use std::fs::File;
 use std::io::{Write, Read, BufRead, BufReader};
 

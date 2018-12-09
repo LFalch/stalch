@@ -51,7 +51,7 @@ impl Value {
     }
     pub fn make_float(&mut self) {
         let repl = match *self {
-            Bool(b) => Float(b as i8 as f64),
+            Bool(b) => Float(f64::from(b as i8)),
             Float(_) => return,
             Integer(n) => Float(n as f64),
             Null | Block(_, _) => Float(NAN),
@@ -69,7 +69,7 @@ impl Value {
             Null | Block(_, _) => Null,
             // TODO Return error
             Variable(_) => Null,
-            Str(ref s) => s.parse::<i128>().map(|i| Integer(i)).unwrap_or(Null)
+            Str(ref s) => s.parse::<i128>().map(Integer).unwrap_or(Null)
         };
         *self = repl;
     }

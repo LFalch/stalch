@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+
 use std::fs::File;
 use clap::{Arg, App};
 
