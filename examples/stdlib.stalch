@@ -13,5 +13,3 @@
 
 { size 1 - 0 $ { 1 + dup 1 + grab swap } * () drop } rev :=
 { len 1 - { + } * swap () size 1 - grab () } sumBlock :=
-
-{ ; 2 : | 2 <> & - } xor :=

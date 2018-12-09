@@ -84,6 +84,15 @@ impl Value {
             a => a,
         }
     }
+    pub fn pow(self, rhs: Self) -> Self {
+        match (self, rhs) {
+            (Integer(a), Integer(b)) => Integer(a.pow(b as u32)),
+            (Integer(a), Float(b)) => Float((a as f64).powf(b)),
+            (Float(a), Integer(b)) => Float(a.powi(b as i32)),
+            (Float(a), Float(b)) => Float(a.powf(b)),
+            _ => Null,
+        }
+    }
 }
 
 impl From<bool> for Value {
@@ -200,6 +209,18 @@ impl BitOr for Value {
             (Bool(a), Bool(b)) => Bool(a || b),
             (Block(_, _), _) | (_, Block(_, _)) => Null,
             (a, b) => (a.as_bool() || b.as_bool()).into(),
+        }
+    }
+}
+
+impl BitXor for Value {
+    type Output = Self;
+    fn bitxor(self, other: Self) -> Self {
+        match (self, other) {
+            (Integer(a), Integer(b)) => Integer(a ^ b),
+            (Bool(a), Bool(b)) => Bool(a ^ b),
+            (Block(_, _), _) | (_, Block(_, _)) => Null,
+            (a, b) => (a.as_bool() ^ b.as_bool()).into(),
         }
     }
 }

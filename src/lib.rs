@@ -339,9 +339,11 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         Print => writeln!(io.o, "{}", state.pop()?)?,
         Or => binop(state, ops::BitOr::bitor)?,
         And => binop(state, ops::BitAnd::bitand)?,
+        Xor => binop(state, ops::BitXor::bitxor)?,
         Add => binop(state, ops::Add::add)?,
         Sub => binop(state, ops::Sub::sub)?,
         Mul => binop(state, ops::Mul::mul)?,
+        Pow => binop(state, Value::pow)?,
         Div => binop(state, ops::Div::div)?,
         Rem => binop(state, ops::Rem::rem)?,
     }
