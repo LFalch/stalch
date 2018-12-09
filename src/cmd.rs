@@ -43,16 +43,16 @@ pub enum Command {
     Rem,
 }
 
-use crate::value::Value as Val;
 use self::Command::*;
+use crate::value::Value as Val;
 
 impl Command {
     pub fn from_str(cmd: &str) -> Self {
         match &*cmd.to_lowercase() {
-            "{"|"["|"do" => BeginBlock,
-            "}"|"]"|"end" => EndBlock,
-            "{}"|"[]"|"nop" => EmptyBlock,
-            "inc"|"include" => Include,
+            "{" | "[" | "do" => BeginBlock,
+            "}" | "]" | "end" => EndBlock,
+            "{}" | "[]" | "nop" => EmptyBlock,
+            "inc" | "include" => Include,
             "@" | "pack" => Pack,
             "size" => Size,
             "len" => Length,
@@ -89,7 +89,7 @@ impl Command {
             "*" | "mul" => Mul,
             "/" | "div" => Div,
             "%" | "rem" => Rem,
-            _ => Value(Val::parse(cmd))
+            _ => Value(Val::parse(cmd)),
         }
     }
 }

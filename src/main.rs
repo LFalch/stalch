@@ -1,25 +1,25 @@
 #![warn(clippy::all)]
 
+use clap::{App, Arg};
 use std::fs::File;
-use clap::{Arg, App};
-
 use std::io::{stdin, stdout, Write};
-use stalch::*;
+
 use stalch::Error::*;
+use stalch::*;
 
 fn main() {
     let matches = App::new(env!("CARGO_PKG_NAME"))
-                          .version(env!("CARGO_PKG_VERSION"))
-                          .author(env!("CARGO_PKG_AUTHORS"))
-                          .about(env!("CARGO_PKG_DESCRIPTION"))
-                          .arg(Arg::with_name("SOURCE")
-                               .help("Source code to run")
-                               .required_unless("interactive"))
-                          .arg(Arg::with_name("interactive")
-                               .short("i")
-                               .long("interactive")
-                               .help("Starts interactive shell"))
-                          .get_matches();
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
+        .arg(Arg::with_name("SOURCE").help("Source code to run").required_unless("interactive"))
+        .arg(
+            Arg::with_name("interactive")
+                .short("i")
+                .long("interactive")
+                .help("Starts interactive shell"),
+        )
+        .get_matches();
     let mut state = State::new();
     let mut stdouter = InOuter::new(stdout(), stdin());
 
@@ -34,7 +34,7 @@ fn main() {
             stdin().read_line(&mut s).unwrap();
             if s.trim_right() == "$exit" {
                 println!();
-                break
+                break;
             }
             match run_with_state(s.as_bytes(), &mut state, &mut stdouter) {
                 Ok(()) => (),
@@ -66,6 +66,6 @@ fn handle_error(e: Error) {
         InvalidMoveArg => eprintln!("Error, move takes a number and one other value"),
         InvalidGrabArg => eprintln!("Error, can only take number as grab argument"),
         InvalidIncludeArg => eprintln!("Error, include can only take a string"),
-        NoBlockStarted => eprintln!("Error, cannot end a block when none has been started")
+        NoBlockStarted => eprintln!("Error, cannot end a block when none has been started"),
     }
 }

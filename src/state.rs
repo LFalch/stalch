@@ -1,9 +1,9 @@
-use std::fmt::{self, Debug};
 use std::collections::HashMap;
+use std::fmt::{self, Debug};
 
-use crate::value::Value;
 use crate::cmd::Command;
 use crate::err::*;
+use crate::value::Value;
 
 #[derive(Debug, Default)]
 pub struct State {
@@ -17,7 +17,7 @@ impl State {
     pub fn new() -> Self {
         State::default()
     }
-    pub fn drain_stack(&mut self) -> impl Iterator<Item=Value> + '_ {
+    pub fn drain_stack(&mut self) -> impl Iterator<Item = Value> + '_ {
         self.stack.drain(..)
     }
     #[inline(always)]
@@ -35,14 +35,16 @@ impl State {
         self.stack.pop().ok_or(Error::EmptyStack)
     }
     pub fn pop(&mut self) -> Result<Value> {
-        self.pop_pure().map(|v| if let Value::Variable(v) = v {
-            if let Some(v) = self.get_var(&v) {
-                v.clone()
+        self.pop_pure().map(|v| {
+            if let Value::Variable(v) = v {
+                if let Some(v) = self.get_var(&v) {
+                    v.clone()
+                } else {
+                    Value::Variable(v)
+                }
             } else {
-                Value::Variable(v)
+                v
             }
-        } else {
-            v
         })
     }
     #[inline(always)]
@@ -51,12 +53,11 @@ impl State {
     }
     #[inline]
     fn index(&self, n: usize) -> Result<usize> {
-        self.stack.len().checked_sub(n+1).ok_or(Error::OutOfBounds)
+        self.stack.len().checked_sub(n + 1).ok_or(Error::OutOfBounds)
     }
     #[inline]
     pub fn insert(&mut self, n: usize, val: Value) -> Result<()> {
-        self.index(n)
-            .map(|i| self.stack.insert(i, val))
+        self.index(n).map(|i| self.stack.insert(i, val))
     }
     pub fn nth(&self, n: usize) -> Result<&Value> {
         Ok(&self.stack[self.index(n)?])

@@ -1,5 +1,5 @@
-use std::result::Result as StdResult;
 use std::io::Error as IoError;
+use std::result::Result as StdResult;
 
 use crate::chars::CharsError;
 

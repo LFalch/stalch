@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
-use std::ops::*;
-use std::fmt;
 use std::f64::NAN;
+use std::fmt;
+use std::ops::*;
 
 use crate::cmd::Command;
 
@@ -13,13 +13,13 @@ pub enum Value {
     Str(String),
     Variable(String),
     Block(u16, Vec<Command>),
-    Null
+    Null,
 }
 
 impl Value {
     pub fn parse(s: &str) -> Self {
         if s.starts_with('"') {
-            Str(s[1..s.len()-1].to_owned())
+            Str(s[1..s.len() - 1].to_owned())
         } else if let Ok(n) = s.parse::<i128>() {
             Integer(n)
         } else if let Ok(n) = s.parse::<f64>() {
@@ -42,7 +42,7 @@ impl Value {
             Block(_, _) => true,
             // TODO Return error
             Variable(_) => false,
-            Null => false
+            Null => false,
         }
     }
     pub fn make_bool(&mut self) {
@@ -57,7 +57,7 @@ impl Value {
             Null | Block(_, _) => Float(NAN),
             // TODO Return error
             Variable(_) => Float(NAN),
-            Str(ref s) => Float(s.parse::<f64>().unwrap_or(NAN))
+            Str(ref s) => Float(s.parse::<f64>().unwrap_or(NAN)),
         };
         *self = repl;
     }
@@ -69,7 +69,7 @@ impl Value {
             Null | Block(_, _) => Null,
             // TODO Return error
             Variable(_) => Null,
-            Str(ref s) => s.parse::<i128>().map(Integer).unwrap_or(Null)
+            Str(ref s) => s.parse::<i128>().map(Integer).unwrap_or(Null),
         };
         *self = repl;
     }
@@ -119,7 +119,7 @@ impl PartialEq for Value {
             (&Integer(a), &Integer(b)) => a == b,
             (&Bool(a), &Bool(b)) => a == b,
             (&Str(ref a), &Str(ref b)) => a == b,
-            _ => false
+            _ => false,
         }
     }
 }
@@ -131,7 +131,7 @@ impl PartialOrd for Value {
             (Integer(a), Integer(b)) => a.partial_cmp(b),
             (Bool(a), Bool(b)) => a.partial_cmp(b),
             (Str(ref a), Str(ref b)) => a.partial_cmp(b),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -146,8 +146,8 @@ impl fmt::Display for Value {
             Bool(ref n) => n.fmt(f),
             Str(ref s) => s.fmt(f),
             Block(_, _) => write!(f, "[code block]"),
-            Variable(ref s)=> write!(f, "[variable: {}]", s),
-            Null       => "NULL".fmt(f)
+            Variable(ref s) => write!(f, "[variable: {}]", s),
+            Null => "NULL".fmt(f),
         }
     }
 }
@@ -167,8 +167,8 @@ impl fmt::Debug for Value {
                     dbg.entries(b);
                 }
                 dbg.finish()
-            },
-            Variable(ref s)=> f.debug_tuple("Var").field(s).finish(),
+            }
+            Variable(ref s) => f.debug_tuple("Var").field(s).finish(),
         }
     }
 }
@@ -187,7 +187,7 @@ impl BitAnd for Value {
             (Integer(a), Integer(b)) => Integer(a & b),
             (Bool(a), Bool(b)) => Bool(a && b),
             (Block(_, _), _) | (_, Block(_, _)) => Null,
-            (a, b)  => (a.as_bool() && b.as_bool()).into(),
+            (a, b) => (a.as_bool() && b.as_bool()).into(),
         }
     }
 }
@@ -199,7 +199,7 @@ impl BitOr for Value {
             (Integer(a), Integer(b)) => Integer(a | b),
             (Bool(a), Bool(b)) => Bool(a || b),
             (Block(_, _), _) | (_, Block(_, _)) => Null,
-            (a, b)  => (a.as_bool() || b.as_bool()).into(),
+            (a, b) => (a.as_bool() || b.as_bool()).into(),
         }
     }
 }
@@ -209,10 +209,10 @@ impl Add for Value {
     fn add(self, other: Self) -> Self {
         match (self, other) {
             (Null, b) => b,
-            (Str(a), b)  => Str(format!("{}{}", a, b)),
+            (Str(a), b) => Str(format!("{}{}", a, b)),
             (a, Null) => a,
-            (Float(a), Str(b))  => Str(format!("{}{}", a, b)),
-            (Integer(a), Str(b))  => Str(format!("{}{}", a, b)),
+            (Float(a), Str(b)) => Str(format!("{}{}", a, b)),
+            (Integer(a), Str(b)) => Str(format!("{}{}", a, b)),
             (Integer(a), Integer(b)) => Integer(a + b),
             (Integer(a), Float(b)) | (Float(b), Integer(a)) => Float(a as f64 + b),
             (Float(a), Float(b)) => Float(a + b),
@@ -244,13 +244,11 @@ impl Mul for Value {
     type Output = Self;
     fn mul(self, other: Self) -> Self {
         match (self, other) {
-            (Str(s), Integer(n)) | (Integer(n), Str(s))  => Str(s.repeat(n as usize)),
+            (Str(s), Integer(n)) | (Integer(n), Str(s)) => Str(s.repeat(n as usize)),
             (Integer(a), Integer(b)) => Integer(a * b),
             (Integer(a), Float(b)) | (Float(b), Integer(a)) => Float(a as f64 * b),
             (Float(a), Float(b)) => Float(a * b),
-            (Integer(n), Block(bn, b)) | (Block(bn, b), Integer(n)) => {
-                Block(n as u16 * bn, b)
-            }
+            (Integer(n), Block(bn, b)) | (Block(bn, b), Integer(n)) => Block(n as u16 * bn, b),
             _ => Null,
         }
     }
