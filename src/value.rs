@@ -113,7 +113,7 @@ impl fmt::Debug for Value {
 impl Not for Value {
     type Output = Self;
     fn not(self) -> Self {
-        self.as_bool().into()
+        (!self.as_bool()).into()
     }
 }
 
