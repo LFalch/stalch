@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use value::Value;
-use cmd::Command;
-use err::*;
+use crate::value::Value;
+use crate::cmd::Command;
+use crate::err::*;
 
+#[derive(Debug, Default)]
 pub struct State {
     stack: Vec<Value>,
     pub block_nesting: u8,
@@ -13,12 +14,7 @@ pub struct State {
 
 impl State {
     pub fn new() -> Self {
-        State {
-            block_nesting: 0,
-            stack: Vec::new(),
-            vars: HashMap::new(),
-            temp: Vec::new(),
-        }
+        State::default()
     }
     #[inline(always)]
     pub fn stack(&self) -> &[Value] {

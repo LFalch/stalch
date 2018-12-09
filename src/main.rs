@@ -1,6 +1,3 @@
-extern crate clap;
-extern crate stalch;
-
 use std::fs::File;
 use clap::{Arg, App};
 

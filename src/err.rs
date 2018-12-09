@@ -1,7 +1,7 @@
 use std::result::Result as StdResult;
 use std::io::Error as IoError;
 
-use chars::CharsError;
+use crate::chars::CharsError;
 
 #[must_use]
 pub type Result<T> = StdResult<T, Error>;

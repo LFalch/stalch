@@ -1,7 +1,8 @@
 use std::ops::*;
 use std::fmt;
+use std::f64::NAN;
 
-use cmd::Command;
+use crate::cmd::Command;
 
 #[derive(Clone)]
 pub enum Value {
@@ -26,16 +27,16 @@ impl Value {
     pub fn make_num(&mut self) {
         let repl = match *self {
             Num(_) => return,
-            Null | Block(_, _) => Num(0./0.),
+            Null | Block(_, _) => Num(NAN),
             // TODO Return error
-            Variable(_) => Num(0./0.),
+            Variable(_) => Num(NAN),
             Str(ref s) => {
                 if s == "true" {
                     Num(1.)
                 } else if s == "false" {
                     Num(0.)
                 } else {
-                    Num(s.parse::<f64>().unwrap_or(0./0.))
+                    Num(s.parse::<f64>().unwrap_or(NAN))
                 }
             }
         };
@@ -57,9 +58,10 @@ impl Value {
 impl From<bool> for Value {
     #[inline(always)]
     fn from(b: bool) -> Value {
-        match b {
-            true => Num(1.),
-            false => Num(0.),
+        if b {
+            Num(1.)
+        } else {
+            Num(0.)
         }
     }
 }
@@ -75,7 +77,7 @@ impl PartialEq for Value {
     }
 }
 
-use Value::*;
+use crate::Value::*;
 
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

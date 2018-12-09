@@ -7,13 +7,13 @@ mod cmd;
 mod state;
 mod err;
 
-use chars::*;
-use value::Value;
-use value::Value::*;
-use cmd::Command;
-use cmd::Command::*;
-pub use state::State;
-pub use err::{Result, Error};
+use crate::chars::*;
+use crate::value::Value;
+use crate::value::Value::*;
+use crate::cmd::Command;
+use crate::cmd::Command::*;
+pub use crate::state::State;
+pub use crate::err::{Result, Error};
 
 pub struct InOuter<W: Write, R: Read> {
     o: W,
@@ -314,7 +314,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         Eq => binop(state, |a, b| a == b)?,
         Neq => binop(state, |a, b| a != b)?,
         Write => write!(io.o, "{}", state.pop()?)?,
-        Print => write!(io.o, "{}\n", state.pop()?)?,
+        Print => writeln!(io.o, "{}", state.pop()?)?,
         Or => binop(state, ops::BitOr::bitor)?,
         And => binop(state, ops::BitAnd::bitand)?,
         Add => binop(state, ops::Add::add)?,
