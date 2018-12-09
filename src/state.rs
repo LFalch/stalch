@@ -1,3 +1,4 @@
+use std::fmt::{self, Debug};
 use std::collections::HashMap;
 
 use crate::value::Value;
@@ -16,16 +17,33 @@ impl State {
     pub fn new() -> Self {
         State::default()
     }
+    pub fn drain_stack(&mut self) -> impl Iterator<Item=Value> + '_ {
+        self.stack.drain(..)
+    }
     #[inline(always)]
     pub fn stack(&self) -> &[Value] {
         &self.stack
+    }
+    pub fn show_stack(&self) -> ShowState {
+        ShowState(self)
     }
     pub fn push(&mut self, val: Value) {
         self.stack.push(val);
     }
     #[inline(always)]
-    pub fn pop(&mut self) -> Result<Value> {
+    pub fn pop_pure(&mut self) -> Result<Value> {
         self.stack.pop().ok_or(Error::EmptyStack)
+    }
+    pub fn pop(&mut self) -> Result<Value> {
+        self.pop_pure().map(|v| if let Value::Variable(v) = v {
+            if let Some(v) = self.get_var(&v) {
+                v.clone()
+            } else {
+                Value::Variable(v)
+            }
+        } else {
+            v
+        })
     }
     #[inline(always)]
     pub fn peek(&self) -> Result<&Value> {
@@ -58,5 +76,28 @@ impl State {
     #[inline(always)]
     pub fn add_var(&mut self, var: String, val: Value) {
         self.vars.insert(var, val);
+    }
+}
+
+pub struct ShowState<'a>(&'a State);
+
+impl Debug for ShowState<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut dbg = f.debug_list();
+        for v in &self.0.stack {
+            match v {
+                Value::Variable(s) => {
+                    if let Some(v) = self.0.get_var(s) {
+                        dbg.entry(v);
+                    } else {
+                        dbg.entry(&format_args!("Var({})", s));
+                    }
+                }
+                _ => {
+                    dbg.entry(v);
+                }
+            }
+        }
+        dbg.finish()
     }
 }

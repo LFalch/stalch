@@ -101,19 +101,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
             }
         }
         ref cmd if state.block_nesting > 0 => state.temp.push(cmd.clone()),
-        Value(s) => if s.starts_with('"') {
-            state.push(Str(s[1..s.len()-1].to_owned()));
-        } else if let Ok(n) = s.parse::<f64>() {
-            state.push(Num(n));
-        } else {
-            let to_push;
-            if let Some(v) = state.get_var(&s) {
-                to_push = v.clone();
-            } else {
-                to_push = Variable(s);
-            }
-            state.push(to_push);
-        }
+        Value(s) => state.push(s),
         EmptyBlock => state.push(Block(1, Vec::new())),
         Include => {
             match state.pop()? {
@@ -124,17 +112,34 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
                 _ => return Err(Error::InvalidIncludeArg)
             }
         }
-        True => state.push(Num(1.)),
-        False => state.push(Num(0.)),
-        NullVal => state.push(Value::Null),
+        Pack => {
+            let mut to_push = Vec::new();
+
+            for val in state.drain_stack() {
+                match val {
+                    Block(n, cmds) => {
+                        to_push.push(BeginBlock);
+                        for _ in 0..n {
+                            for cmd in &cmds {
+                                to_push.push(cmd.clone());
+                            }
+                        }
+                        to_push.push(EndBlock);
+                    }
+                    v => to_push.push(Value(v)),
+                }
+            }
+
+            state.push(Block(1, to_push));
+        }
         Size => {
-            let size = state.stack().len() as f64;
-            state.push(Num(size))
+            let size = state.stack().len() as i128;
+            state.push(Integer(size))
         }
         Length => {
             let to_push = match *state.peek()? {
-                Block(n, ref b) => Num((n as usize * b.len()) as f64),
-                Str(ref s) => Num(s.chars().count() as f64),
+                Block(n, ref b) => Integer((n as usize * b.len()) as i128),
+                Str(ref s) => Integer(s.chars().count() as i128),
                 _ => Null
             };
             state.push(to_push);
@@ -158,8 +163,8 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
                 when_false
             });
         }
-        Assign => {
-            match (state.pop()?, state.pop()?) {
+        Define => {
+            match (state.pop_pure()?, state.pop()?) {
                 (Variable(_), Variable(_)) => return Err(Error::InvalidAssignArg),
                 (Variable(h), v) | (v, Variable(h)) => state.add_var(h, v),
                 _ => return Err(Error::InvalidAssignArg),
@@ -192,7 +197,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         }
         Split => {
             let i = match state.pop()? {
-                Num(n) => n,
+                Integer(n) => n,
                 _ => return Err(Error::InvalidSplitArg)
             } as usize;
 
@@ -222,7 +227,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         }
         Get => {
             let i = match state.pop()? {
-                Num(n) => n,
+                Integer(n) => n,
                 _ => return Err(Error::InvalidGetArg)
             } as usize;
 
@@ -257,7 +262,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         }
         DupGet => {
             let i = match state.pop()? {
-                Num(n) => n,
+                Integer(n) => n,
                 _ => return Err(Error::InvalidGetArg)
             } as usize;
 
@@ -283,7 +288,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
             state.push(val);
         }
         Move => match state.pop()? {
-            Num(n) => {
+            Integer(n) => {
                 let elem = state.peek()?.clone();
 
                 state.insert(n as usize, elem)?;
@@ -292,7 +297,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
             _ => return Err(Error::InvalidMoveArg)
         }
         Grab => match state.pop()? {
-            Num(n) => {
+            Integer(n) => {
                 let n_elem = state.take_nth(n as usize)?;
 
                 state.push(n_elem);
@@ -300,7 +305,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
             _ => return Err(Error::InvalidGrabArg)
         }
         DupGrab => match state.pop()? {
-            Num(n) => {
+            Integer(n) => {
                 let n_elem = state.nth(n as usize)?.clone();
 
                 state.push(n_elem);
@@ -310,9 +315,27 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         Drop => {
             state.pop()?;
         }
-        CastNum => state.last_mut()?.make_num(),
+        Type => {
+            let t = match state.pop()? {
+                Float(_) => "float",
+                Integer(_) => "int",
+                Bool(_) => "bool",
+                Str(_) => "str",
+                Variable(_) => "var",
+                Block(_, _) => "block",
+                Null => "null",
+            }.into();
+            state.push(t);
+        }
+        ToFloat => state.last_mut()?.make_float(),
+        ToInt => state.last_mut()?.make_int(),
+        ToBool => state.last_mut()?.make_bool(),
         Eq => binop(state, |a, b| a == b)?,
         Neq => binop(state, |a, b| a != b)?,
+        GreaterThan => binop(state, |a, b| a > b)?,
+        GreaterEquals => binop(state, |a, b| a >= b)?,
+        LessThan => binop(state, |a, b| a < b)?,
+        LessEquals => binop(state, |a, b| a <= b)?,
         Write => write!(io.o, "{}", state.pop()?)?,
         Print => writeln!(io.o, "{}", state.pop()?)?,
         Or => binop(state, ops::BitOr::bitor)?,

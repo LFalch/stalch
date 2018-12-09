@@ -38,7 +38,7 @@ fn main() {
                 Ok(()) => (),
                 Err(e) => handle_error(e),
             }
-            println!(" >{:?}", state.stack());
+            println!(" >{:?}", state.show_stack());
         }
     } else {
         let src = matches.value_of("SOURCE").unwrap();

@@ -1,6 +1,6 @@
-< # {
+<- bool {
     "Type password" _
-    < "secret" =
+    <- "secret" =
     { "Correct!" _ }
     { "Incorrect!" _ } ? ()
 }

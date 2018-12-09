@@ -1,9 +1,9 @@
 false dup   &   _
-true  false &&  _
+true  false &  _
 true  dup   and _
-false true  &&  _
+false true  &  _
 "" _
-false dup   || _
+false dup   | _
 true  false |  _
-true  dup   || _
+true  dup   | _
 false true  or _
