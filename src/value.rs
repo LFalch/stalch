@@ -8,7 +8,7 @@ use crate::cmd::Command;
 #[derive(Clone)]
 pub enum Value {
     Float(f64),
-    Integer(i128),
+    Integer(i64),
     Bool(bool),
     Str(String),
     Variable(String),
@@ -20,7 +20,7 @@ impl Value {
     pub fn parse(s: &str) -> Self {
         if s.starts_with('"') {
             Str(s[1..s.len() - 1].to_owned())
-        } else if let Ok(n) = s.parse::<i128>() {
+        } else if let Ok(n) = s.parse::<i64>() {
             Integer(n)
         } else if let Ok(n) = s.parse::<f64>() {
             Float(n)
@@ -63,13 +63,13 @@ impl Value {
     }
     pub fn make_int(&mut self) {
         let repl = match *self {
-            Bool(b) => Integer(b as i128),
+            Bool(b) => Integer(b as i64),
             Integer(_) => return,
-            Float(n) => Integer(n as i128),
+            Float(n) => Integer(n as i64),
             Null | Block(_, _) => Null,
             // TODO Return error
             Variable(_) => Null,
-            Str(ref s) => s.parse::<i128>().map(Integer).unwrap_or(Null),
+            Str(ref s) => s.parse::<i64>().map(Integer).unwrap_or(Null),
         };
         *self = repl;
     }
@@ -101,9 +101,9 @@ impl From<bool> for Value {
         Bool(b)
     }
 }
-impl From<i128> for Value {
+impl From<i64> for Value {
     #[inline(always)]
-    fn from(i: i128) -> Value {
+    fn from(i: i64) -> Value {
         Integer(i)
     }
 }

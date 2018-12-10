@@ -139,13 +139,13 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
             state.push(Block(1, to_push));
         }
         Size => {
-            let size = state.stack().len() as i128;
+            let size = state.stack().len() as i64;
             state.push(Integer(size))
         }
         Length => {
             let to_push = match *state.peek()? {
-                Block(n, ref b) => Integer((n as usize * b.len()) as i128),
-                Str(ref s) => Integer(s.chars().count() as i128),
+                Block(n, ref b) => Integer((n as usize * b.len()) as i64),
+                Str(ref s) => Integer(s.chars().count() as i64),
                 _ => Null,
             };
             state.push(to_push);

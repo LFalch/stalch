@@ -24,10 +24,10 @@ When the interpreter encounters a literal, it is parsed and pushed to the stack.
     other operations like comparison operators.
  * Integer
 
-    A 128-bit signed integer value.
+    A 64-bit signed integer value.
  * Float
 
-    A 64-bit floating point values. If a number can't be parsed as integer, it will float.
+    A 64-bit floating point value. If a number can't be parsed as integer, it will try as float.
  * Block
 
     A mixture between an anonymous function and an array/list. They are created with the by
