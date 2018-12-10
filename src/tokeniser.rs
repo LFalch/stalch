@@ -107,7 +107,7 @@ impl<I: Iterator<Item=Result<char, E>>, E, F: FnMut(&str) -> bool> Iterator for 
             if let Class::String = cur_token {
                 match peek_c {
                     '\\' => {
-                        let a = try_iter!(iter.next().unwrap());
+                        let _a = try_iter!(iter.next().unwrap());
                         let b = try_iter!(iter.next().unwrap());
                         buf.push(escape_char(b));
                         continue

@@ -24,7 +24,7 @@ impl State {
     pub fn stack(&self) -> &[Value] {
         &self.stack
     }
-    pub fn show_stack(&self) -> ShowState {
+    pub fn show_stack(&self) -> ShowState<'_> {
         ShowState(self)
     }
     pub fn push(&mut self, val: Value) {
@@ -83,7 +83,7 @@ impl State {
 pub struct ShowState<'a>(&'a State);
 
 impl Debug for ShowState<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut dbg = f.debug_list();
         for v in &self.0.stack {
             match v {

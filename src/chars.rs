@@ -65,7 +65,7 @@ impl std_error::Error for CharsError {
             CharsError::Other(ref e) => std_error::Error::description(e),
         }
     }
-    fn cause(&self) -> Option<&std_error::Error> {
+    fn cause(&self) -> Option<&dyn std_error::Error> {
         match *self {
             CharsError::NotUtf8 => None,
             CharsError::Other(ref e) => e.cause(),
@@ -74,7 +74,7 @@ impl std_error::Error for CharsError {
 }
 
 impl fmt::Display for CharsError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             CharsError::NotUtf8 => {
                 "byte stream did not contain valid utf8".fmt(f)
@@ -84,7 +84,7 @@ impl fmt::Display for CharsError {
     }
 }
 
-fn read_one_byte(reader: &mut Read) -> Option<Result<u8>> {
+fn read_one_byte(reader: &mut dyn Read) -> Option<Result<u8>> {
     let mut buf = [0];
     loop {
         return match reader.read(&mut buf) {
@@ -100,11 +100,11 @@ fn read_one_byte(reader: &mut Read) -> Option<Result<u8>> {
 #[inline]
 pub fn utf8_char_width(b: u8) -> usize {
     match b {
-        0...0x7f => 1,
-        0xc2...0xdf => 2,
-        0xe0...0xef => 3,
-        0xf0...0xf4 => 4,
-        0x80...0xc1 | 0xf5...0xff => 0,
+        0..=0x7f => 1,
+        0xc2..=0xdf => 2,
+        0xe0..=0xef => 3,
+        0xf0..=0xf4 => 4,
+        0x80..=0xc1 | 0xf5..=0xff => 0,
         _ => unreachable!(),
     }
 }

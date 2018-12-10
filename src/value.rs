@@ -149,7 +149,7 @@ impl PartialOrd for Value {
 use crate::Value::*;
 
 impl fmt::Display for Value {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Float(ref n) => n.fmt(f),
             Integer(ref n) => n.fmt(f),
@@ -163,7 +163,7 @@ impl fmt::Display for Value {
 }
 
 impl fmt::Debug for Value {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Float(ref n) => n.fmt(f),
             Integer(ref n) => n.fmt(f),
