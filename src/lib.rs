@@ -172,9 +172,13 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         },
         ApplyFunction => match state.pop()? {
             Block(n, b) => {
-                for _ in 0..n {
+                'block: for _ in 0..n {
                     for cmd in &b {
-                        run_command(state, cmd.clone(), io)?;
+                        if let Exit = cmd {
+                            break 'block;
+                        } else {
+                            run_command(state, cmd.clone(), io)?;
+                        }
                     }
                 }
             }
@@ -337,6 +341,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         LessEquals => binop(state, |a, b| a <= b)?,
         Write => write!(io.o, "{}", state.pop()?)?,
         Print => writeln!(io.o, "{}", state.pop()?)?,
+        Exit => return Err(Error::Exit),
         Or => binop(state, ops::BitOr::bitor)?,
         And => binop(state, ops::BitAnd::bitand)?,
         Xor => binop(state, ops::BitXor::bitxor)?,

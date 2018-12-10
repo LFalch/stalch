@@ -57,6 +57,7 @@ fn handle_error(e: Error) {
     match e {
         IoError(e) => panic!("Unexpected error:\n{:?}", e),
         CharsError(e) => panic!("Unexpected error:\n{:?}", e),
+        Exit => (),
         EmptyStack => eprintln!("Error, empty stack"),
         OutOfBounds => eprintln!("Error, out of bounds"),
         InvalidAssignArg => eprintln!("Error, can only assign value to a variable name"),
