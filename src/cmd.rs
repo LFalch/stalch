@@ -3,7 +3,6 @@ pub enum Command {
     Value(Val),
     BeginBlock,
     EndBlock,
-    EmptyBlock,
     Pack,
     Size,
     Length,
@@ -61,7 +60,6 @@ impl Command {
         Some(match &*cmd.to_lowercase() {
             "{" | "[" => BeginBlock,
             "}" | "]" => EndBlock,
-            "{}" | "[]" => EmptyBlock,
             "inc" | "include" => Include,
             "@" | "pack" => Pack,
             "size" => Size,

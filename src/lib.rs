@@ -10,12 +10,14 @@ mod cmd;
 mod err;
 mod state;
 mod value;
+mod tokeniser;
 
 use crate::chars::*;
 use crate::cmd::Command;
 use crate::cmd::Command::*;
 use crate::value::Value;
 use crate::value::Value::*;
+use crate::tokeniser::Tokeniser;
 
 pub use crate::err::{Error, Result};
 pub use crate::state::State;
@@ -41,22 +43,11 @@ where
     R2: Read,
     W: Write,
 {
-    let mut buf = String::new();
-    let mut ignoring_whitespace = false;
-
-    for c in src.chars_iterator() {
+    for c in Tokeniser::from_char_iter(src.chars_iterator(), |s| Command::from_str_pure(s).is_some()) {
         match c {
-            Ok(c) => {
-                if c.is_whitespace() && !ignoring_whitespace {
-                    if !buf.is_empty() {
+            Ok((buf, token)) => {
+                if token != tokeniser::Class::Whitespace {
                         run_command(state, Command::from_str(&buf), io)?;
-                        buf.clear();
-                    }
-                } else {
-                    if c == '"' {
-                        ignoring_whitespace = !ignoring_whitespace;
-                    }
-                    buf.push(c);
                 }
             }
             Err(e) => return Err(Error::CharsError(e)),
@@ -110,7 +101,6 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         }
         ref cmd if state.block_nesting > 0 => state.temp.push(cmd.clone()),
         Value(s) => state.push(s),
-        EmptyBlock => state.push(Block(1, Vec::new())),
         Include => match state.pop()? {
             Str(s) => {
                 let file = File::open(s)?;
