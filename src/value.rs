@@ -169,16 +169,15 @@ impl fmt::Debug for Value {
             Integer(ref n) => n.fmt(f),
             Bool(ref n) => n.fmt(f),
             Str(ref s) => s.fmt(f),
-            Null => write!(f, "Null"),
+            Null => write!(f, "null"),
             Block(n, ref b) => {
-                write!(f, "Block")?;
                 let mut dbg = f.debug_set();
                 for _ in 0..n {
                     dbg.entries(b);
                 }
                 dbg.finish()
             }
-            Variable(ref s) => f.debug_tuple("Var").field(s).finish(),
+            Variable(ref s) => write!(f, "{}", s),
         }
     }
 }

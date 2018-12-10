@@ -4,12 +4,12 @@
 
 "" swap
 
-dup 3 % 0 =
+dup 3 % 0 ==
 { swap "Fizz" + swap }
 {}
 if ()
 
-dup 5 % 0 =
+dup 5 % 0 ==
 { swap "Buzz" + swap }
 {}
 if ()
@@ -23,6 +23,6 @@ if ()
 
 "How far do you wanna go?" _
 read int dup
-"Doing FizzBuzz from 1 to " swap + \n + _
+"Doing FizzBuzz from 1 to " swap + "\n" + _
 
 forrange ()

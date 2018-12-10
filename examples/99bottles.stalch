@@ -1,0 +1,26 @@
+"stdlib.stalch" inc
+
+{
+    1 == { "bottle" } { "bottles" } ? ()
+} bottle :=
+
+
+{
+    d d " " $bottle() + + " of beer on the wall " + $ dup 2 move + " " + $bottle() " of beer" + +
+} l1 :=
+
+{
+    "Take one down, pass it around, " $ d bottle() " " $ + " of beer on the wall" + + +
+} l2 :=
+
+{
+    100 $ - dup
+    l1()_
+    1 -
+    l2()_""_
+}
+99
+forrange()
+
+0 l1()_
+"Go to the store, buy some more, 99 bottles of beer on the wall"_

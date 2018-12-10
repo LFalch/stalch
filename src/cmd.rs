@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Command {
     Value(Val),
     BeginBlock,
@@ -45,6 +45,57 @@ pub enum Command {
     Rem,
 }
 
+impl Debug for Command {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", match self {
+            Value(v) => return v.fmt(f),
+            BeginBlock => "{",
+            EndBlock => "}",
+            Pack => "@",
+            Size => "size",
+            Length => "len",
+            Dup => "dup",
+            Not => "!",
+            If => "if",
+            Define => ":=",
+            ApplyFunction => "()",
+            Read => "<-",
+            Swap => "$",
+            Split => "split",
+            Get => "get",
+            DupGet => "dupget",
+            Move => "<>",
+            Grab => "#",
+            DupGrab => "dupgrab",
+            Include => "inc",
+            Drop => "~",
+            Type => "type",
+            ToFloat => "float",
+            ToInt => "int",
+            ToBool => "bool",
+            Eq => "==",
+            Neq => "!=",
+            GreaterThan => ">",
+            GreaterEquals => ">=",
+            LessThan => "<",
+            LessEquals => "<=",
+            Write => "->",
+            Print => "_",
+            Exit => "x",
+            Or => "|",
+            And => "&",
+            Xor => "^",
+            Add => "+",
+            Sub => "-",
+            Mul => "*",
+            Pow => "**",
+            Div => "/",
+            Rem => "%",
+        })
+    }
+}
+
+use std::fmt::{self, Debug};
 use self::Command::*;
 use crate::value::Value as Val;
 
@@ -64,7 +115,7 @@ impl Command {
             "@" | "pack" => Pack,
             "size" => Size,
             "len" => Length,
-            ";" | "dup" => Dup,
+            "d" | "dup" => Dup,
             "!" | "not" => Not,
             "?" | "if" => If,
             ":=" | "def" => Define,
@@ -73,7 +124,7 @@ impl Command {
             "$" | "swap" => Swap,
             "\\/" | "\\\\/" | "split" => Split,
             "." | "get" => Get,
-            ".:" | "dupget" => DupGet,
+            ";" | "dupget" => DupGet,
             "<>" | "move" => Move,
             "#" | "grab" => Grab,
             ":" | "dupgrab" => DupGrab,

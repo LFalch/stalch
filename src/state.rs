@@ -91,7 +91,7 @@ impl Debug for ShowState<'_> {
                     if let Some(v) = self.0.get_var(s) {
                         dbg.entry(v);
                     } else {
-                        dbg.entry(&format_args!("Var({})", s));
+                        dbg.entry(&format_args!("{}", s));
                     }
                 }
                 _ => {
