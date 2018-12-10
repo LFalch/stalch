@@ -18,12 +18,19 @@ When the interpreter encounters a literal, it is parsed and pushed to the stack.
     Anything inside quotation marks ("") will be treated as a string.
     There is no escaping yet, everything between quotation marks will
     be considered part of the string.
- * Number
+ * Bool
 
-    All numbers are 64-bit floating point values.
+    A boolean value `true` or `false`. Used for `if` and is the result of some
+    other operations like comparison operators.
+ * Integer
+
+    A 64-bit signed integer value.
+ * Float
+
+    A 64-bit floating point value. If a number can't be parsed as integer, it will try as float.
  * Block
 
-    Basically a lambda (anonymous function). They are created with the by
+    A mixture between an anonymous function and an array/list. They are created with the by
     putting code between the `{` and `}` operators. These are also pushed to
     the stack. It can be run using the `apply` command (alias: `()`).
  * Null
@@ -33,9 +40,9 @@ When the interpreter encounters a literal, it is parsed and pushed to the stack.
 
     Used to assign a value to a name. When called they either push what their
     name is assigned to, or push a variable handle. This handle can be used to
-    assign a value to a name with the `assign` command (alias: `:=`)
+    assign a value to a name with the `def` command (alias: `:=`)
     ##### Example
-        foo 47 :=
+        47 foo :=
 
 ## Basic commands
 
@@ -80,18 +87,18 @@ Stalch has three commands to pass stuff through STDIN and STDOUT:
 
 This prints pops the stack and prints the value to STDOUT along with a newline.
 
-#### `wrte` (`>`)
+#### `wrte` (`->`)
 
 Does the same as `prnt`, but doesn't add a newline.
 
-#### `read` (`<`)
+#### `read` (`<-`)
 
 This reads a line from `STDIN` and pushes it to the stack as a string
 (NOTE: The string will be right trimmed).
 
 ### Stack manipulation
 
-#### `swap`, `exch`, `$`
+#### `swap`, `$`
 
 This command switches the two top values in the stack. E.g imagine a stack as follows:
 
@@ -101,7 +108,7 @@ Running `swap` would make it look as this:
 
 `A B D C`
 
-#### `drop`
+#### `drop`, `~`
 
 Pops the stack and simply throws away the value.
 
@@ -109,7 +116,7 @@ Pops the stack and simply throws away the value.
 
 Pushes a copy of the current top value to the stack.
 
-#### `grab`, `£`
+#### `grab`, `¤`
 
 Pops a value, `n`, from the stack, this value is assumed to be an integer.
 It then goes `n` elements back in the stack and moves that value to the top.

@@ -1,4 +1,4 @@
-"stdlib.stalch" require
+"stdlib.stalch" include
 
 {
 
@@ -22,7 +22,7 @@ if ()
 }
 
 "How far do you wanna go?" _
-read num dup
+read int dup
 "Doing FizzBuzz from 1 to " swap + \n + _
 
 forrange ()

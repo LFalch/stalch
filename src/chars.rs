@@ -137,14 +137,14 @@ mod tests {
 
     #[test]
     pub fn char_width() {
-        for i in 0..256 {
-            assert_eq!(super::utf8_char_width(i as u8) as u8, UTF8_CHAR_WIDTH[i]);
+        for i in 0..=255 {
+            assert_eq!(super::utf8_char_width(i) as u8, UTF8_CHAR_WIDTH[i as usize]);
         }
     }
 
     #[test]
     fn chars_iterator_works() {
-        let s = "hello, I'm cool".to_owned();
+        let s = "ħɛlɭoʊ, Ï'ˀm̃ c̈₀⁰ɫ".to_owned();
 
         let c = Cursor::new(s.clone().into_bytes());
 

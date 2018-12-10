@@ -1,17 +1,12 @@
-forrange [
+[
     0
     { 1 + swap dup 2 dupgrab swap () swap } 2 grab *
     () drop drop
-] :=
+] forrange :=
 
-\n "
-" :=
-
-dropall {
+{
     size { drop } * ()
-} :=
+} dropall :=
 
-rev { size 1 - 0 $ { 1 + dup 1 + grab swap } * () drop } :=
-sumBlock { len 1 - { + } * swap () size 1 - grab () } :=
-
-xor { ; 2 : || 2 << && - } :=
+{ size 1 - 0 $ { 1 + dup 1 + grab swap } * () drop } rev :=
+{ len 1 - { + } * swap () size 1 - grab () } sumBlock :=

@@ -1,18 +1,15 @@
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Command {
-    Value(String),
+    Value(Val),
     BeginBlock,
     EndBlock,
-    EmptyBlock,
-    True,
-    False,
-    NullVal,
+    Pack,
     Size,
     Length,
     Dup,
     Not,
     If,
-    Assign,
+    Define,
     ApplyFunction,
     Read,
     Swap,
@@ -24,61 +21,86 @@ pub enum Command {
     DupGrab,
     Include,
     Drop,
-    CastNum,
+    Type,
+    ToFloat,
+    ToInt,
+    ToBool,
     Eq,
     Neq,
+    GreaterThan,
+    GreaterEquals,
+    LessThan,
+    LessEquals,
     Write,
     Print,
+    Exit,
     Or,
     And,
+    Xor,
     Add,
     Sub,
     Mul,
+    Pow,
     Div,
     Rem,
 }
 
 use self::Command::*;
+use crate::value::Value as Val;
 
 impl Command {
     pub fn from_str(cmd: &str) -> Self {
-        match &*cmd.to_lowercase() {
-            "{"|"["|"do" => BeginBlock,
-            "}"|"]"|"end" => EndBlock,
-            "{}"|"[]"|"nop" => EmptyBlock,
-            "require"|"load"|"import"|"include" => Include,
-            "t" | "true" => True,
-            "f" | "false" => False,
-            "¤" | "null" | "nil" => NullVal,
+        if let Some(cmd) = Self::from_str_pure(cmd) {
+            cmd
+        } else {
+            Value(Val::parse(cmd))
+        }
+    }
+    pub fn from_str_pure(cmd: &str) -> Option<Self> {
+        Some(match &*cmd.to_lowercase() {
+            "{" | "[" => BeginBlock,
+            "}" | "]" => EndBlock,
+            "inc" | "include" => Include,
+            "@" | "pack" => Pack,
             "size" => Size,
             "len" => Length,
             ";" | "dup" => Dup,
             "!" | "not" => Not,
             "?" | "if" => If,
-            ":=" | "<-" | "assign" => Assign,
+            ":=" | "def" => Define,
             "()" | "apply" => ApplyFunction,
-            "<" | "read" => Read,
-            "$" | "swap" | "exch" => Swap,
+            "<-" | "read" => Read,
+            "$" | "swap" => Swap,
             "\\/" | "\\\\/" | "split" => Split,
             "." | "get" => Get,
-            ";." | "dupget" => DupGet,
-            "<<" | "move" => Move,
-            "£" | "grab" => Grab,
+            ".:" | "dupget" => DupGet,
+            "<>" | "move" => Move,
+            "#" | "grab" => Grab,
             ":" | "dupgrab" => DupGrab,
-            "drop" => Drop,
-            "#" | "num" => CastNum,
+            "~" | "drop" => Drop,
+            "t" | "type" => Type,
+            "f" | "float" => ToFloat,
+            "i" | "int" => ToInt,
+            "b" | "bool" => ToBool,
             "==" | "=" | "eq" => Eq,
             "!=" | "~=" | "neq" => Neq,
-            ">" | "wrte" => Write,
+            ">" => GreaterThan,
+            ">=" => GreaterEquals,
+            "<" => LessThan,
+            "<=" => LessEquals,
+            "->" | "wrte" => Write,
             "_" | "prnt" => Print,
-            "||" | "|" | "or" => Or,
-            "&&" | "&" | "and" => And,
+            "x" | "exit" => Exit,
+            "|" | "or" => Or,
+            "&" | "and" => And,
+            "^" | "xor" => Xor,
             "+" | "add" => Add,
             "-" | "sub" => Sub,
             "*" | "mul" => Mul,
+            "**" | "pow" => Pow,
             "/" | "div" => Div,
             "%" | "rem" => Rem,
-            _ => Value(cmd.to_owned())
-        }
+            _ => return None,
+        })
     }
 }
