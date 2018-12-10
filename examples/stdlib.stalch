@@ -4,9 +4,7 @@
     () drop drop
 ] forrange :=
 
-{
-    size { drop } * ()
-} dropall :=
+{size {drop}*()} dropall :=
 
 { size 1 - 0 $ { 1 + dup 1 + grab swap } * () drop } rev :=
-{ len 1 - { + } * swap () size 1 - grab () } sumBlock :=
+{len 1-{+}*$() size 1-#()} sumBlock :=

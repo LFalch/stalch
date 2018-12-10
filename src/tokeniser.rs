@@ -28,7 +28,7 @@ impl Class {
             Class::Whitespace => c.is_whitespace(),
             Class::String => c != '"' && c != '\n',
             Class::LineComment => c != '\n',
-            Class::SpecialCharacter => !(c.is_alphanumeric() || c.is_whitespace()),
+            Class::SpecialCharacter => !(c.is_alphanumeric() || c.is_whitespace() || c == '"'),
         }
     }
     fn classify_start(c: char) -> Self {
