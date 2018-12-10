@@ -4,9 +4,6 @@
     () drop drop
 ] forrange :=
 
-"
-" \n :=
-
 {
     size { drop } * ()
 } dropall :=

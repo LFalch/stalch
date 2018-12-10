@@ -19,6 +19,7 @@ pub enum Value {
 impl Value {
     pub fn parse(s: &str) -> Self {
         if s.starts_with('"') {
+            debug_assert!(s.len() > 1, "string {:?} has invalid format", s);
             Str(s[1..s.len() - 1].to_owned())
         } else if let Ok(n) = s.parse::<i64>() {
             Integer(n)

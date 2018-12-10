@@ -46,8 +46,8 @@ where
     for c in Tokeniser::from_char_iter(src.chars_iterator(), |s| Command::from_str_pure(s).is_some()) {
         match c {
             Ok((buf, token)) => {
-                if token != tokeniser::Class::Whitespace {
-                        run_command(state, Command::from_str(&buf), io)?;
+                if !token.should_ignore() {
+                    run_command(state, Command::from_str(&buf), io)?;
                 }
             }
             Err(e) => return Err(Error::CharsError(e)),

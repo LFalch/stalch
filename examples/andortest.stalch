@@ -1,9 +1,9 @@
-false dup   &   _
-true  false &  _
-true  dup   and _
-false true  &  _
+false dup   &   _ ' should be false
+true  false &  _  ' should be false
+true  dup   and _ ' should be true
+false true  &  _  ' should be false
 "" _
-false dup   | _
-true  false |  _
-true  dup   | _
-false true  or _
+false dup   | _   ' should be false
+true  false |  _  ' should be true
+true  dup   | _   ' should be true
+false true  or _  ' should be true

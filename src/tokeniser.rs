@@ -4,20 +4,21 @@ use std::iter::Peekable;
 pub enum Class {
     Identifier,
     SpecialCharacter,
+    LineComment,
     String,
     Number,
     Whitespace
 }
 
 impl Class {
-    #[allow(dead_code)]
-    fn is_start(self, c: char) -> bool {
+    pub fn should_ignore(self) -> bool {
         match self {
-            Class::String => c == '"',
-            Class::Identifier => c.is_alphabetic(),
-            Class::Number => c.is_numeric(),
-            Class::Whitespace => c.is_whitespace(),
-            Class::SpecialCharacter => !(c.is_alphanumeric() || c.is_whitespace()),
+            Class::Whitespace => true,
+            Class::LineComment => true,
+            Class::String => false,
+            Class::Identifier => false,
+            Class::Number => false,
+            Class::SpecialCharacter => false,
         }
     }
     fn is_continue(self, c: char) -> bool {
@@ -26,12 +27,14 @@ impl Class {
             Class::Number => c.is_numeric() || c == '.' || c == 'e' || c == 'E',
             Class::Whitespace => c.is_whitespace(),
             Class::String => c != '"' && c != '\n',
+            Class::LineComment => c != '\n',
             Class::SpecialCharacter => !(c.is_alphanumeric() || c.is_whitespace()),
         }
     }
     fn classify_start(c: char) -> Self {
         match c {
             '"' => Class::String,
+            '\'' => Class::LineComment,
             c if c.is_alphabetic() => Class::Identifier,
             c if c.is_numeric() => Class::Number,
             c if c.is_whitespace() => Class::Whitespace,
@@ -73,6 +76,19 @@ macro_rules! try_iter {
     );
 }
 
+fn escape_char(c: char) -> char {
+    match c {
+        'n' => '\n',
+        '"' => '\"',
+        '\'' => '\'',
+        '\\' => '\\',
+        '0' => '\0',
+        'r' => '\r',
+        't' => '\t',
+        _ => '\u{FFD}',
+    }
+}
+
 impl<I: Iterator<Item=Result<char, E>>, E, F: FnMut(&str) -> bool> Iterator for Tokeniser<I, E, F> {
     type Item = Result<(String, Class), E>;
 
@@ -91,13 +107,20 @@ impl<I: Iterator<Item=Result<char, E>>, E, F: FnMut(&str) -> bool> Iterator for 
             if let Class::String = cur_token {
                 match peek_c {
                     '\\' => {
-                        for _ in 0..2 {
-                            buf.push(try_iter!(iter.next().unwrap()));
-                        }
+                        let a = try_iter!(iter.next().unwrap());
+                        let b = try_iter!(iter.next().unwrap());
+                        buf.push(escape_char(b));
+                        continue
                     }
                     '"' => {
+                        let was_empty = buf.is_empty();
                         buf.push(try_iter!(iter.next().unwrap()));
-                        break
+                        if was_empty {
+                            continue;
+                        } else {
+                            *cur_token = Class::Whitespace;
+                            break;
+                        }
                     },
                     _ => ()
                 }
