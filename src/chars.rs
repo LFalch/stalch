@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     fn chars_iterator_works() {
-        let s = "hello, I'm cool".to_owned();
+        let s = "ħɛlɭoʊ, Ï'ˀm̃ c̈₀⁰ɫ".to_owned();
 
         let c = Cursor::new(s.clone().into_bytes());
 
