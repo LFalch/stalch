@@ -51,10 +51,17 @@ use crate::value::Value as Val;
 
 impl Command {
     pub fn from_str(cmd: &str) -> Self {
-        match &*cmd.to_lowercase() {
-            "{" | "[" | "do" => BeginBlock,
-            "}" | "]" | "end" => EndBlock,
-            "{}" | "[]" | "nop" => EmptyBlock,
+        if let Some(cmd) = Self::from_str_pure(cmd) {
+            cmd
+        } else {
+            Value(Val::parse(cmd))
+        }
+    }
+    pub fn from_str_pure(cmd: &str) -> Option<Self> {
+        Some(match &*cmd.to_lowercase() {
+            "{" | "[" => BeginBlock,
+            "}" | "]" => EndBlock,
+            "{}" | "[]" => EmptyBlock,
             "inc" | "include" => Include,
             "@" | "pack" => Pack,
             "size" => Size,
@@ -70,11 +77,11 @@ impl Command {
             "." | "get" => Get,
             ".:" | "dupget" => DupGet,
             "<>" | "move" => Move,
-            "¤" | "grab" => Grab,
+            "#" | "grab" => Grab,
             ":" | "dupgrab" => DupGrab,
             "~" | "drop" => Drop,
             "t" | "type" => Type,
-            "#" | "float" => ToFloat,
+            "f" | "float" => ToFloat,
             "i" | "int" => ToInt,
             "b" | "bool" => ToBool,
             "==" | "=" | "eq" => Eq,
@@ -95,7 +102,7 @@ impl Command {
             "**" | "pow" => Pow,
             "/" | "div" => Div,
             "%" | "rem" => Rem,
-            _ => Value(Val::parse(cmd)),
-        }
+            _ => return None,
+        })
     }
 }
