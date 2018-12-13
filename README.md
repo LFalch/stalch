@@ -49,10 +49,12 @@ When the interpreter encounters a literal, it is parsed and pushed to the stack.
 Almost every command works with what's currently at the top of the stack.
 The syntax is postfix and may therefore be unfamiliar.
 
+Go to [COMMANDS.md](./COMMANDS.md) to see a list of all commands and what they do.
+
 ### Mathematical operators
 
-The basic mathematical operators are `add`, `sub`, `mul`, `div`, `rem` which
-each have the following respective symbolic aliases: `+`, `-`, `*`, `/`, `%`.
+The basic mathematical operators are `add`, `sub`, `mul`, `div`, `pow`, `rem` which
+each have the following respective symbolic aliases: `+`, `-`, `*`, `**`, `/`, `%`.
 
 #### Example
 
@@ -89,18 +91,18 @@ This prints pops the stack and prints the value to STDOUT along with a newline.
 
 #### `wrte` (`->`)
 
-Does the same as `prnt`, but doesn't add a newline.
+Does the same as `prnt`, but doesn't add a newline. Think of the arrow as pointing outwards.
 
 #### `read` (`<-`)
 
-This reads a line from `STDIN` and pushes it to the stack as a string
+This reads a line from `STDIN` and pushes it to the stack as a string. Think of the arrow as points inwards.
 (NOTE: The string will be right trimmed).
 
 ### Stack manipulation
 
 #### `swap`, `$`
 
-This command switches the two top values in the stack. E.g imagine a stack as follows:
+This command switches the two top values in the stack. E.g. imagine a stack as follows:
 
 `A B C D`
 
@@ -112,11 +114,11 @@ Running `swap` would make it look as this:
 
 Pops the stack and simply throws away the value.
 
-#### `dup`, `;`
+#### `dup`, `d`
 
 Pushes a copy of the current top value to the stack.
 
-#### `grab`, `¤`
+#### `grab`, `#`
 
 Pops a value, `n`, from the stack, this value is assumed to be an integer.
 It then goes `n` elements back in the stack and moves that value to the top.
