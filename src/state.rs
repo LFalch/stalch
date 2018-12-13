@@ -48,8 +48,23 @@ impl State {
         })
     }
     #[inline(always)]
-    pub fn peek(&self) -> Result<&Value> {
+    pub fn peek_pure(&self) -> Result<&Value> {
         self.stack.last().ok_or(Error::EmptyStack)
+    }
+    #[inline(always)]
+    pub fn peek(&self) -> Result<&Value> {
+        self.peek_pure().map(|v| {
+            if let Value::Variable(v) = v {
+                if let Some(v) = self.get_var(&v) {
+                    v
+                } else {
+                    // TODO HACK FIX this is bad code
+                    self.peek_pure().unwrap()
+                }
+            } else {
+                v
+            }
+        })
     }
     #[inline]
     fn index(&self, n: usize) -> Result<usize> {

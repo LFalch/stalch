@@ -127,9 +127,12 @@ impl PartialEq for Value {
             (&Null, &Null) => true,
             (&Float(a), &Float(b)) => a == b,
             (&Integer(a), &Integer(b)) => a == b,
+            (&Integer(a), &Float(b)) | (&Float(b), &Integer(a)) => a as f64 == b,
             (&Bool(a), &Bool(b)) => a == b,
             (&Str(ref a), &Str(ref b)) => a == b,
-            _ => false,
+            (&Block(n, ref a), &Block(m, ref b)) => a == b && n == m,
+            (&Variable(_), _) | (_, &Variable(_)) => false,
+            _ => false
         }
     }
 }
@@ -139,6 +142,7 @@ impl PartialOrd for Value {
         match (self, other) {
             (Float(a), Float(b)) => a.partial_cmp(b),
             (Integer(a), Integer(b)) => a.partial_cmp(b),
+            (&Integer(a), &Float(b)) | (&Float(b), &Integer(a)) => (a as f64).partial_cmp(&b),
             (Bool(a), Bool(b)) => a.partial_cmp(b),
             (Str(ref a), Str(ref b)) => a.partial_cmp(b),
             _ => None,
@@ -185,7 +189,12 @@ impl fmt::Debug for Value {
 impl Not for Value {
     type Output = Self;
     fn not(self) -> Self {
-        (!self.as_bool()).into()
+        match self {
+            Bool(b) => Bool(!b),
+            Integer(n) => Integer(!n),
+            Null | Block(_, _) | Variable(_) => Null,
+            s @ Float(_) | s @ Str(_) => Bool(!s.as_bool()),
+        }
     }
 }
 

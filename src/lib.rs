@@ -148,6 +148,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
             let a = state.pop()?;
             state.push(!a);
         }
+        // A B C -> A ? B: C
         If => {
             let when_false = state.pop()?;
             let when_true = state.pop()?;
