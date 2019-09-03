@@ -179,7 +179,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         Read => {
             let mut line = String::new();
             io.i.read_line(&mut line)?;
-            line = line.trim_right().to_owned();
+            line = line.trim_end().to_owned();
             state.push(Str(line));
         }
         Swap => {

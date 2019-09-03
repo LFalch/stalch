@@ -32,7 +32,7 @@ fn main() {
 
             let mut s = String::new();
             stdin().read_line(&mut s).unwrap();
-            if s.trim_right() == "$exit" {
+            if s.trim_end() == "$exit" {
                 println!();
                 break;
             }

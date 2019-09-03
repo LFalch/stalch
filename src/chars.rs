@@ -68,7 +68,7 @@ impl std_error::Error for CharsError {
     fn cause(&self) -> Option<&dyn std_error::Error> {
         match *self {
             CharsError::NotUtf8 => None,
-            CharsError::Other(ref e) => e.cause(),
+            CharsError::Other(ref e) => e.source(),
         }
     }
 }
@@ -105,7 +105,6 @@ pub fn utf8_char_width(b: u8) -> usize {
         0xe0..=0xef => 3,
         0xf0..=0xf4 => 4,
         0x80..=0xc1 | 0xf5..=0xff => 0,
-        _ => unreachable!(),
     }
 }
 

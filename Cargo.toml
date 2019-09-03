@@ -6,7 +6,7 @@ description = "stack-based esolang"
 edition = "2018"
 
 [dependencies]
-clap = { version = ">=2.26, <=2.32", optional = true }
+clap = { version = ">=2.26, <=2.33", optional = true }
 
 [[bin]]
 name = "stalch"
