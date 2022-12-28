@@ -104,7 +104,7 @@ fn run_command<W: Write, R: Read>(state: &mut State, cmd: Command, io: &mut InOu
         Include => match state.pop()? {
             Str(s) => {
                 let file = File::open(s)?;
-                run_with_state(file, state, io)?;
+                run_with_state(BufReader::new(file), state, io)?;
             }
             _ => return Err(Error::InvalidIncludeArg),
         },

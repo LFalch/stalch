@@ -2,7 +2,7 @@
 
 use clap::{App, Arg};
 use std::fs::File;
-use std::io::{stdin, stdout, Write};
+use std::io::{stdin, stdout, Write, BufReader};
 
 use stalch::Error::*;
 use stalch::*;
@@ -46,7 +46,7 @@ fn main() {
         let src = matches.value_of("SOURCE").unwrap();
 
         let file = File::open(src).unwrap();
-        match run_with_state(file, &mut state, &mut stdouter) {
+        match run_with_state(BufReader::new(file), &mut state, &mut stdouter) {
             Ok(()) => (),
             Err(e) => handle_error(e),
         }
